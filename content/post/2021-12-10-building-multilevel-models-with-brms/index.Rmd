@@ -47,7 +47,7 @@ head(d)
 ```
 ## The most simple model
 
-The values that I want to predict in this data set are body mass, measured in grams (`body_mass_g`). The simplest model we could use to predict body mass would contain a single parameter, the `Intercept`, sometimes also called $\alpha$ in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in `brm` using the formula: `body_mass_g ~ 1`. 
+The values that I want to predict in this data set are body mass, measured in grams (`body_mass_g`). The simplest model we could use to predict body mass would contain a single parameter, the `Intercept`, sometimes also called $\alpha$ in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in `brm` using the formula: `body_mass_g ~ 1`. This is *not a multilevel* model because we are estimating two parameters -- $\mu$ and $\sigma$ -- only at the population level. 
 
 ```{r, warning=F, message=F, eval=F}
 mod0 <- brm(data = d, family = gaussian(),
@@ -67,7 +67,7 @@ We can examine the estimates using `posterior_summary()` -- which returns the es
 posterior_summary(mod0)
 ```
 
-Another way to comprehend the mean and uncertainty is to generate draws from the posterior and graph the distribution of body mass values. 
+Another way to describe the mean and uncertainty of the `Intercept` parameter is to generate draws from the posterior and graph the distribution of body mass values. There are many ways to generate draws and graph distributions, but a full description of these methods is beyond the scope of this post. 
 
 ```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of body mass (g).', fig.align='center'}
 mod0 %>% spread_draws(b_Intercept) %>%
@@ -75,8 +75,84 @@ mod0 %>% spread_draws(b_Intercept) %>%
 ```
 
 
-## Group variation
+## Species variation, fixed and random
 
+A sensible biologist might point out that body mass  probably varies across each species of penguin. We can assess by adding a **fixed effect** of species to our model. This will estimate how mean at the population level varies across groups (i.e., multiple intercepts). It will not, however, help us understand how body mass varies *within* each species. To do that, we need estimate **random intercepts** for each species group. We'll fit both models to illustrate the difference. 
+
+For the fixed effect model, we add a covariate for species to our model formula: 
+
+> `body_mass_g ~ -1 + species`
+
+This formula will estimate a fixed intercept for each of the species groups in the dataset. The `-1` tells `brms` not to estimate an overall mean, but instead to estimate separate means.  
+
+```{r, warning=F, message=F, eval=F}
+mod1a <- brm(data = d, family = gaussian(),
+            body_mass_g ~ -1 + species)
+```
+
+```{r, warning=F, message=F,echo=F}
+mod1a <- brm(data = d, family = gaussian(),
+            body_mass_g ~ -1 + species, 
+            file = "~/Shane's Projects/folio/content/post/2021-12-10-building-multilevel-models-with-brms/models/Model1a-FixedSpecies",
+            file_refit = 'on_change')
+```
+
+We can examine the estimates by calling the model object inside the `fixef()` function. 
+```{r}
+fixef(mod1a)
+```
+
+Here we see that `Adelie` and `Chinstrap` have relatively similar mean and error values, while the mean for `Gentoo` is much larger. Just how much body mass measurements overlap is every easier to see if we graph the posterior. 
+
+```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of body mass (g) for each penguin species.', fig.align='center'}
+mod1a %>% 
+    spread_draws(b_speciesAdelie, b_speciesChinstrap, b_speciesGentoo) %>%
+    select(b_speciesAdelie, b_speciesChinstrap, b_speciesGentoo) %>%
+    gather(key = species, value = body_mass) %>%
+    mutate(species = str_remove(species, 'b_species')) %>%
+    ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+    sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
+    theme(legend.position = c(0.55,0.5))
+```
+Although the graph makes it clear that there are mean differences between species, the shape of the curve is based on the same `sigma` value for the entire population. Thus, our model *only* accounts for between species variation. To describe variation within and between species, we need allow random intercepts for each species. 
+
+We estimate random intercepts using a formula with following term: 
+
+> `body_mass_g ~(1|species)`
+
+```{r, warning=F, message=F, eval=F}
+mod1b <- brm(data = d, family = gaussian(),
+            body_mass_g ~ (1|species))
+```
+
+```{r, warning=F, message=F,echo=F}
+mod1b <- brm(data = d, family = gaussian(),
+            body_mass_g ~ (1|species), 
+            file = "~/Shane's Projects/folio/content/post/2021-12-10-building-multilevel-models-with-brms/models/Model1b-RandomSpecies",
+            file_refit = 'on_change')
+```
+
+To view this model, we use `ranef()` -- for random effects -- instead of `fixef()`. 
+
+```{r}
+ranef(mod1b)
+```
+We see a similar structure but with very different estimates and error. The estimate represent differences between the mean body size for each species (level 1) and the population mean (level 2). Let's plot this posterior and see how it compares to `mod1a`. 
+
+```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of random intercepts of body mass (g) for each penguin species.', fig.align='center'}
+mod1b %>% 
+    spread_draws(b_Intercept, r_species[species,]) %>%
+    mutate(body_mass = b_Intercept + r_species) %>%
+    ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+    sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
+    theme(legend.position = c(0.55,0.5))
+```
+
+The distributions in Figure 3 look hardly different from the distributions in Figure 2. What is this?? Well these figures both show the distribution of estimated mean values. The real variation lies in the uncertainty around these value. This we can see by visualizing the uncertainty. 
+
+```{r}
+mod1b %>% posterior_samples()
+```
 
 
 
