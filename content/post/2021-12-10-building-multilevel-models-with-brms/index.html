@@ -18,7 +18,9 @@ tags:
 <pre class="r"><code>options(mc.cores = parallel::detectCores(), scipen = 0)
 #install.packages(&#39;rstan&#39;)
 #install.packages(&#39;brms&#39;)
-library(brms)</code></pre>
+library(brms)
+library(tidybayes)
+library(tidyverse)</code></pre>
 <p>For this demonstration, I will analyze the <code>palmerpenguins</code> dataset made available on github by <a href="https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1">Allison Horst</a>. These data describe multiple species of penguins – Chinstrap, Gentoo, and Adelie – that inhabit Antarctica.</p>
 <pre class="r"><code>#remotes::install_github(&#39;allisonhorst/palmerpenguins&#39;)
 library(palmerpenguins)
@@ -35,11 +37,25 @@ head(d)</code></pre>
 ## 5 Adelie  Torge~           36.7          19.3              193        3450 fema~
 ## 6 Adelie  Torge~           39.3          20.6              190        3650 male 
 ## # ... with 1 more variable: year &lt;int&gt;</code></pre>
+<div id="the-most-simple-model" class="section level2">
+<h2>The most simple model</h2>
 <p>The values that I want to predict in this data set are body mass, measured in grams (<code>body_mass_g</code>). The simplest model we could use to predict body mass would contain a single parameter, the <code>Intercept</code>, sometimes also called <span class="math inline">\(\alpha\)</span> in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in <code>brm</code> using the formula: <code>body_mass_g ~ 1</code>.</p>
 <pre class="r"><code>mod0 &lt;- brm(data = d, family = gaussian(),
             body_mass_g ~ 1)</code></pre>
-<p>We can examine the estimate using <code>fixef()</code> – which returns the estimates for all fixed effects in a <code>&lt;brmsfit&gt;</code> object.</p>
-<pre class="r"><code>fixef(mod0)</code></pre>
-<pre><code>##           Estimate Est.Error    Q2.5    Q97.5
-## Intercept  4200.43   44.0927 4113.55 4288.291</code></pre>
-<p>The model estimates mean body mass (g) to be <code>4200.43</code> with <code>44.09</code> grams of error. This comparable to the value of <code>4201.75</code> computed using <code>base</code> <code>R</code>.</p>
+<p>We can examine the estimates using <code>posterior_summary()</code> – which returns the estimates for all estimated parameters in a <code>&lt;brmsfit&gt;</code> object. The model estimates mean body mass (g) to be <code>4200.43</code> with <code>44.09</code> grams of error. This comparable to the value of <code>4201.75</code> computed using <code>base</code> <code>R</code>. The Gaussian family also estimates a <code>sigma</code> value of <code>802.90</code>, which is comparable to the standard deviation (sd = <code>801.95</code>)</p>
+<pre class="r"><code>posterior_summary(mod0)</code></pre>
+<pre><code>##               Estimate Est.Error       Q2.5      Q97.5
+## b_Intercept  4200.4297 44.092696  4113.5505  4288.2908
+## sigma         802.9045 31.099490   744.5619   867.5428
+## lp__        -2781.4773  1.027485 -2784.2627 -2780.4728</code></pre>
+<p>Another way to comprehend the mean and uncertainty is to generate draws from the posterior and graph the distribution of body mass values.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-7"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" alt="Posterior distribution of body mass (g)." width="384" />
+<p class="caption">
+Figure 1: Posterior distribution of body mass (g).
+</p>
+</div>
+</div>
+<div id="group-variation" class="section level2">
+<h2>Group variation</h2>
+</div>

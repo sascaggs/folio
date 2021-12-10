@@ -18,7 +18,22 @@ options(mc.cores = parallel::detectCores(), scipen = 0)
 #install.packages('rstan')
 #install.packages('brms')
 library(brms)
+library(tidybayes)
+library(tidyverse)
 ```
+
+```{r, echo=F}
+sas_nogrid <- sas_nogrid <- theme(panel.background = element_rect(fill = 'white', colour = 'black'), 
+                    panel.border = element_rect(color='black', size=1.2, fill = '#00000000'), 
+                    panel.grid = element_blank(), 
+                    text = element_text(family = 'mono', size = 14),
+                    axis.ticks.length = unit(0.15, 'inch'), 
+                    axis.ticks = element_line(size=0.7), 
+                    strip.background = element_rect(fill = 'black', color = 'black'), 
+                    strip.text = element_text(color='white', face = 'bold'))
+
+```
+
 
 
 For this demonstration, I will analyze the `palmerpenguins` dataset made available on github by [Allison Horst](https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1). These data describe multiple species of penguins -- Chinstrap, Gentoo, and Adelie -- that inhabit Antarctica. 
@@ -30,6 +45,8 @@ data('penguins')
 d <- penguins
 head(d)
 ```
+## The most simple model
+
 The values that I want to predict in this data set are body mass, measured in grams (`body_mass_g`). The simplest model we could use to predict body mass would contain a single parameter, the `Intercept`, sometimes also called $\alpha$ in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in `brm` using the formula: `body_mass_g ~ 1`. 
 
 ```{r, warning=F, message=F, eval=F}
@@ -44,12 +61,22 @@ mod0 <- brm(data = d, family = gaussian(),
             file_refit = 'on_change')
 ```
 
-We can examine the estimate using `fixef()` -- which returns the estimates for all fixed effects in a `<brmsfit>` object.
+We can examine the estimates using `posterior_summary()` -- which returns the estimates for all estimated parameters in a `<brmsfit>` object. The model estimates mean body mass (g) to be `4200.43` with `44.09` grams of error. This comparable to the value of ``r round(mean(d$body_mass_g, na.rm=T), digits=2)`` computed using `base` `R`. The Gaussian family also estimates a `sigma` value of `802.90`, which is comparable to the standard deviation (sd  = ``r round(sd(d$body_mass_g, na.rm=T),digits=2)``)
 
 ```{r}
-fixef(mod0)
+posterior_summary(mod0)
 ```
 
-The model estimates mean body mass (g) to be `4200.43` with `44.09` grams of error. This comparable to the value of ``r round(mean(d$body_mass_g, na.rm=T), digits=2)`` computed using `base` `R`.
+Another way to comprehend the mean and uncertainty is to generate draws from the posterior and graph the distribution of body mass values. 
+
+```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of body mass (g).', fig.align='center'}
+mod0 %>% spread_draws(b_Intercept) %>%
+    ggplot(aes(b_Intercept)) + geom_density(fill='#3300ff33', color='#3300ff', lwd=1.2) + sas_nogrid + geom_vline(xintercept = 4200.43, lty=2)
+```
+
+
+## Group variation
+
+
 
 
