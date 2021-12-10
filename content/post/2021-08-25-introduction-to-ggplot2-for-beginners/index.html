@@ -1,0 +1,269 @@
+---
+title: Introduction to ggplot2 for beginners
+author: Shane A. Scaggs
+date: '2021-08-25'
+slug: []
+categories:
+  - R
+tags:
+  - ggplot2
+  - data visualization
+  - tidyverse
+  - data analysis
+  - instruction
+draft: yes
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div class="figure">
+<img src="images/ggplot2-partI-recap.gif" style="width:75.0%;height:75.0%" alt="" />
+<p class="caption">A recap of all the ggplot2 plots you’ll learn in this tutorial.</p>
+</div>
+<div id="preamble" class="section level1">
+<h1>Preamble</h1>
+<p>This is a beginner’s guide to <code>ggplot2</code>. I created this guide because I have been asked often enough to help with plotting that I figured I should start my own guide. It is nice to have an instructional tool that is written in your own voice.</p>
+<p>With that said, there are many fantastic <code>ggplot2</code> guides that already exist.</p>
+<ul>
+<li><p>This <a href="https://www.cedricscherer.com/2019/08/05/a-ggplot2-tutorial-for-beautiful-plotting-in-r/">extensive tutorial</a> by Cedric Scherer is fantastic.</p></li>
+<li><p>The <a href="https://anthro-data-science.github.io/">Anthro-Data-Science</a> group that I work in has <a href="https://github.com/anthro-data-science/intro-data-viz-ggplot">introductory</a> and <a href="https://github.com/anthro-data-science/data-viz-pt2">advanced</a> tutorials on <code>ggplot2.</code></p></li>
+<li><p>Then there is Hadley Wickhams official <a href="https://ggplot2-book.org/">book</a> on the package.</p></li>
+</ul>
+<p>And of course many more…</p>
+</div>
+<div id="getting-started" class="section level1">
+<h1>Getting started</h1>
+<p>The first thing we will do is create a toy dataset to visualize.</p>
+<pre class="r"><code>set.seed(27)
+N &lt;- 1e4                        # number of rows
+X &lt;- rnorm(N)                   
+Y &lt;- rnorm(N, 0-X^2)
+Z &lt;- rnorm(N, 0+X+Y)
+d &lt;- data.frame(X,Y,Z)          # store in a data.frame
+head(d)</code></pre>
+<pre><code>##            X          Y          Z
+## 1  1.9071626 -2.7684808 -0.4496010
+## 2  1.1448769 -0.6087749  2.3628358
+## 3 -0.7645307 -1.1785060 -1.1723798
+## 4 -1.4574325 -1.3734263 -2.9523468
+## 5 -1.0934689  0.3949903 -2.2337209
+## 6  0.2952412 -0.4362264 -0.3700393</code></pre>
+<p>We also need the <code>tidyverse</code> suite that contains <code>ggplot2</code> and many other useful packages.</p>
+<pre class="r"><code>#install.packages(tidyverse)
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --</code></pre>
+<pre><code>## v ggplot2 3.3.5     v purrr   0.3.4
+## v tibble  3.1.4     v dplyr   1.0.7
+## v tidyr   1.1.3     v stringr 1.4.0
+## v readr   2.0.1     v forcats 0.5.1</code></pre>
+<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<p>The <code>ggplot2()</code> function is where we specify our variables. There are two<br />
+ways to do this. 1) You can use the <code>%&gt;%</code> operator or 2) call the data set<br />
+inside of <code>ggplot2()</code>. After an example, I will use the 1st method for the
+rest of this script.</p>
+<pre class="r"><code># 1) 
+d %&gt;% ggplot()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code># 2)
+ggplot(data = d)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+<p>One reason to use the pipe (<code>%&gt;%</code>) is that you can string together multiple
+operations and then end with a plot if you wan to. This is what the <code>tidyverse</code> is used for primarily. See below.</p>
+<pre class="r"><code>d %&gt;% 
+    filter(X &gt; 0) %&gt;%           # subset the data with filter()
+    mutate(XY = X * Y) %&gt;%      # create new variables with mutate()
+    summarise(MeanX = mean(X),  # summarise your data
+              sdX = sd(X),
+              MeanY = mean(Y),
+              sdY = sd(Y),
+              MeanZ = mean(Z), 
+              sdZ = sd(Z))</code></pre>
+<pre><code>##       MeanX       sdX     MeanY      sdY      MeanZ      sdZ
+## 1 0.7952283 0.6041653 -1.010543 1.730619 -0.2384907 1.655587</code></pre>
+<p>There are many other functions to look into, like <code>group_by()</code> and <code>select()</code>. But for now we will move on to focus on plotting.</p>
+</div>
+<div id="the-basics" class="section level1">
+<h1>The Basics</h1>
+<pre class="r"><code>d %&gt;% ggplot()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>This plot is empty because we haven’t included any variables. We use the
+<code>aes()</code> function inside <code>ggplot()</code> to specify variables from <code>d</code>.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Now the graph can automatically assign axes that match the range of the<br />
+values in our variables, but it does not know what kind of geom to use.<br />
+A geom specifies how the data will be represented on the graph. In this<br />
+plot we have two continuous variables, so we can use <code>geom_point</code> to create
+a scatterplot.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>We can also many aesthetics within this geom layer like the <code>size</code>, <code>shape</code>,
+<code>color</code>, or transparency (<code>alpha</code>) of the points.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(color=&#39;tomato&#39;, shape=6)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>We can also assign a third variable to one of these aesthetics by using<br />
+the <code>aes()</code> function inside of <code>geom_point()</code></p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=Z))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>You don’t have to keep typing out the whole code either; you can assign the plot to an object and then continue to modify it.</p>
+<pre class="r"><code>p &lt;- d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=Z))
+p + geom_smooth(color=&#39;tomato&#39;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;gam&#39; and formula &#39;y ~ s(x, bs = &quot;cs&quot;)&#39;</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>But if you use the same type of geom again, it will place a new geom on top of the previous usage.</p>
+<pre class="r"><code>p + geom_point(alpha=0.3)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Likewise…</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y)) + 
+    geom_point(aes(color=Z)) + 
+    geom_point(alpha=0.3)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>There are many kinds of geoms available in <code>ggplot2</code> and there a lot of extensions to the <code>ggplot2</code> package.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y)) + geom_hex()   # requires `hexbin` package</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>But not all geoms work with every kind of variables. Many require certain types of variables classes or additional properties. Always use the <code>?</code> in from of a geom to explore the details (e.g. <code>?geom_rect</code>).</p>
+</div>
+<div id="discrete-variables" class="section level1">
+<h1>Discrete variables</h1>
+<p>Let’s add a factor class to our data set using this custom function.</p>
+<pre class="r"><code># this function creates n quantile bins for x
+qcut &lt;- function(x,n) { 
+    cut(x, quantile(x, seq(0, 1, length=n+1)), labels = seq_len(n),
+        include.lowest = TRUE)
+}
+
+d$QX &lt;- qcut(d$X, n=6)
+d$QY &lt;- qcut(d$Y, n=6)
+d$QZ &lt;- qcut(d$Z, n=6)</code></pre>
+<p>Now we can use this showcase different kinds of plots. For example, one of my favorites for discrete variables (factors) is <code>geom_bin2d</code>.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=QX, y=QY)) + geom_bin2d() </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+</div>
+<div id="discrete-continuous" class="section level1">
+<h1>Discrete + Continuous</h1>
+<p>There are other geoms that are suited to combinations of discrete and continuous variables.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=QX, y=Y)) + geom_boxplot() </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=QX, y=Y)) + geom_violin() </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-2.png" width="672" /></p>
+<p>Another option is to plot two coninuous variables and then add <code>aes()</code> to visualize a third discrete variable.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X,y=Y)) + geom_point(aes(color=QZ))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p>Alternatively, we could use <code>facet_grid()</code> to create separate plots for each of the discrete factor levels. <code>facet_grid</code> will use the same axes so that each plot is comparable.</p>
+<pre class="r"><code>d %&gt;% 
+    ggplot(aes(x=X,y=Y)) + 
+    geom_point(aes(color=QZ)) + 
+    facet_grid(~QZ)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+</div>
+<div id="d-plots-aka-nope" class="section level1">
+<h1>3D plots (aka NOPE)</h1>
+<p>This question always comes up and I always have a disappoint answer to give…</p>
+<p>We’ve been using three continous variables throughout these examples. You might wondering, can we plot a 3D scatterplot? The answer yes, but it is not a useful approach because the visualization will be messy and hard to interpret. Instead, create a triplicate using using the <code>cowplot</code> package.</p>
+<pre class="r"><code>#install.packages(&#39;cowplot&#39;)
+library(cowplot)</code></pre>
+<p>Create three plots for each combination of <code>x</code>, <code>y</code>, and <code>z.</code></p>
+<pre class="r"><code>p1 &lt;- d %&gt;% ggplot(aes(x=X,y=Y)) + geom_point(alpha=0.1)  # X ~ Y
+p2 &lt;- d %&gt;% ggplot(aes(x=X,y=Z)) + geom_point(alpha=0.1)  # X ~ Z
+p3 &lt;- d %&gt;% ggplot(aes(x=Y,y=Z)) + geom_point(alpha=0.1)  # Y ~ Z</code></pre>
+<p>Give them titles.</p>
+<pre class="r"><code>p1 &lt;- p1 + ggtitle(&quot;X ~ Y&quot;)
+p2 &lt;- p2 + ggtitle(&quot;X ~ Z&quot;)
+p3 &lt;- p3 + ggtitle(&quot;Y ~ Z&quot;)</code></pre>
+<p>Use <code>cowplot</code> to place them in a grid. Unlike <code>facet_grid</code>, these axes are not comparable.</p>
+<pre class="r"><code>cowplot::plot_grid(p1,p2,p3, nrow = 1)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+</div>
+<div id="colors-and-axes" class="section level1">
+<h1>Colors and axes</h1>
+<p>Let us go back to the <code>geom_bin2d</code> plot.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=QX,y=QY)) + geom_bin2d()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p>Suppose we want to change the fill color spectrum used for the legend. To do this, we must specify a new layer that controls the <code>scale_fill</code>. Since count is a continuous variable, we choose <code>scale_fill_gradient</code> and set the high and low colors of the gradient. The colors need to be some what different to see some breaks across the gradient.</p>
+<pre class="r"><code>p &lt;- d %&gt;% ggplot(aes(x=QX,y=QY)) + geom_bin2d()
+p + scale_fill_gradient(high = &#39;cyan&#39;, low = &#39;tomato&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p>There are also popular gradients already built into <code>ggplot2</code> like the viridis color palettes. Use the <code>option =</code> command to select which one.</p>
+<pre class="r"><code>p + scale_fill_viridis_c()  # the &#39;c&#39; at the end stands for continuous</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<pre class="r"><code>p + scale_fill_viridis_c(option = &#39;A&#39;)  # one of my favorites!</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-25-2.png" width="672" /></p>
+<p>Discrete variables are another matter. To change these, I usually use the manual options like <code>scale_color_manual</code>. Let’s try it on the scatter plot from before. First we’ll use viridis again.</p>
+<pre class="r"><code>p &lt;- d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=QZ))
+p + scale_color_viridis_d()   </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p>Notice how <code>scale_fill_viridis</code> has become <code>scale_color_viridis</code>. You must match the scale function to the aesthetic that you are changing. You will see this again in a moment.</p>
+<p>Let’s try scale_color_manual. Here you have to specify your own palette. It is easier to create an object, but you can also supply the colors in the <code>scale_color_manual</code> layer. The key is that the number of colors will matches the number of factor levels; in this case, 6.</p>
+<pre class="r"><code>my_pal &lt;- c(&#39;#422E66&#39;,&#39;#66576C&#39;,&#39;#C19FBA&#39;,&#39;#CBC1C6&#39;,&#39;#B25D41&#39;,&#39;#924536&#39;)
+p + scale_color_manual(values = my_pal)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p>The <code>scale_</code> functions also are used to alter the axes tick marks. How it once again depends on the variable type (discrete, continuous). Let’s start with continuous. Set the breaks for the axis. Compare 1st and 2nd</p>
+<pre class="r"><code># 1st
+d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=QZ))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<pre class="r"><code># 2nd
+d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=QZ)) + 
+    scale_x_continuous(breaks = seq(-4,4,by=0.5)) + 
+    scale_y_continuous(breaks = seq(-20,4, by=1))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-28-2.png" width="672" /></p>
+<p>That’s a lot of grid lines.
+For a discrete variable, instead we change the labels. This is useful when the data are abbreviated &amp; you want to plot to be more descriptive.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=QX,y=Y)) + geom_violin(aes(fill=QX)) + 
+    scale_x_discrete(labels = c(&#39;I&#39;,&#39;II&#39;,&#39;III&#39;,&#39;IV&#39;,&#39;V&#39;,&#39;VI&#39;)) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
+<p>You can also change the labels of the axis and the legend using <code>labs()</code>.</p>
+<pre class="r"><code>d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=QZ)) + 
+    labs(x=&quot;A Gaussian random variable X&quot;, 
+         y=&quot;A Gaussian random variable Y&quot;, 
+         color=&quot;16.667% quantiles\nfor a Gaussian\nrandom variable Z&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+</div>
+<div id="themes" class="section level1">
+<h1>Themes</h1>
+<p>There is great deal more that you can do with <code>ggplot2.</code> But for now, we will end by talking about themes. A <code>theme</code> controls the background and gridline aesthetics, the fonts, the axis ticks, etc. There are several default themes.</p>
+<pre class="r"><code>p &lt;- d %&gt;% ggplot(aes(x=X, y=Y)) + geom_point(aes(color=QZ))
+p + theme_minimal()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<pre class="r"><code>p + theme_classic()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-31-2.png" width="672" /></p>
+<pre class="r"><code>p + theme_dark()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-31-3.png" width="672" /></p>
+<pre class="r"><code>p + theme_void()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-31-4.png" width="672" /></p>
+<p>Which theme you choose depends on the format of the document where the plot will eventually live.</p>
+<p>You can also create your own themes using <code>theme()</code>. Inside theme you specify the part of theme that you will modify and the corresponding element for that part. For example, to modify <code>panel.background</code>, you need to use the <code>element_rect()</code>.</p>
+<pre class="r"><code>p + theme(panel.background = element_rect(fill=&#39;tomato&#39;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<p>Each element has specific aesthetics that you can set. If you want to remove a part of the graph, you can use <code>element_blank()</code>.</p>
+<pre class="r"><code>p + theme(panel.background = element_rect(fill = &#39;white&#39;, color = &#39;black&#39;), 
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(color=&#39;cornsilk2&#39;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p>You can also save your theme and then add it as a layer.</p>
+<pre class="r"><code>my_theme &lt;- theme(panel.background = element_rect(fill = &#39;white&#39;, color = &#39;black&#39;), 
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_line(color=&#39;cornsilk2&#39;))
+p + my_theme</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<p>And finally, theme is where you can adjust the <code>legend</code> for the plot.</p>
+<pre class="r"><code>p + my_theme + theme(legend.position = &#39;bottom&#39;) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
+<pre class="r"><code>p + my_theme + theme(legend.position = c(0.1,0.8)) # 0,1 coordinates in the graph</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-35-2.png" width="672" /></p>
+<pre class="r"><code>p + my_theme + theme(legend.position = &#39;none&#39;) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-35-3.png" width="672" /></p>
+</div>
+<div id="goodbye" class="section level1">
+<h1>Goodbye</h1>
+<p>That is allow for now. But when in doubt remember Edward Tufte:</p>
+<blockquote>
+<p>“Above all else, show the data.”</p>
+</blockquote>
+<p>And of course this one:</p>
+<blockquote>
+<p>“It is not how much information there is, but rather how effectively it is arranged.”</p>
+</blockquote>
+</div>

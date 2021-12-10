@@ -1,0 +1,229 @@
+---
+title: Exploring multilayer structure
+author: Shane A. Scaggs
+date: '2021-07-28'
+slug: []
+categories:
+  - Simulation
+tags:
+  - matrix
+  - array
+  - network analysis
+  - generative model
+  - multilayer
+draft: yes
+---
+
+<script src="index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Dear reader,</p>
+<p>In this post, I explore some data structures in <code>R</code> that can be used to represent multilayer network structure. I also used this structure to build a simple generative model of a slowly growing network.</p>
+<div id="part-i-matrices-and-arrays" class="section level1">
+<h1>Part I: Matrices and Arrays</h1>
+<p>Networks can have multiple layers representing different kinds of relationships or changing relationships over time. Each network layer can be represented as a <code>matrix.</code></p>
+<pre class="r"><code>N &lt;- 5
+M &lt;- matrix( rep(0, 5^2), nrow = N)
+M</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    0    0    0    0    0
+## [2,]    0    0    0    0    0
+## [3,]    0    0    0    0    0
+## [4,]    0    0    0    0    0
+## [5,]    0    0    0    0    0</code></pre>
+<p>The values along the diagonal of the matrix are loops (i.e., self-ties, cannibalism, etc.).</p>
+<pre class="r"><code>diag(M) &lt;- 1
+M</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    0    0    0
+## [2,]    0    1    0    0    0
+## [3,]    0    0    1    0    0
+## [4,]    0    0    0    1    0
+## [5,]    0    0    0    0    1</code></pre>
+<pre class="r"><code>diag(M) &lt;- 0</code></pre>
+<p>And the values in the upper and lower triangles of the matrix indicate directionality in the network.</p>
+<pre class="r"><code>upper.tri(M)</code></pre>
+<pre><code>##       [,1]  [,2]  [,3]  [,4]  [,5]
+## [1,] FALSE  TRUE  TRUE  TRUE  TRUE
+## [2,] FALSE FALSE  TRUE  TRUE  TRUE
+## [3,] FALSE FALSE FALSE  TRUE  TRUE
+## [4,] FALSE FALSE FALSE FALSE  TRUE
+## [5,] FALSE FALSE FALSE FALSE FALSE</code></pre>
+<pre class="r"><code>lower.tri(M)</code></pre>
+<pre><code>##       [,1]  [,2]  [,3]  [,4]  [,5]
+## [1,] FALSE FALSE FALSE FALSE FALSE
+## [2,]  TRUE FALSE FALSE FALSE FALSE
+## [3,]  TRUE  TRUE FALSE FALSE FALSE
+## [4,]  TRUE  TRUE  TRUE FALSE FALSE
+## [5,]  TRUE  TRUE  TRUE  TRUE FALSE</code></pre>
+<p>We can assign values <code>N^2</code> to each element in the matrix using Bernoulli trials to generate a random graph (e.g. the Erdos-Renyi model).</p>
+<pre class="r"><code>set.seed(777)
+M &lt;- matrix( rbinom(N^2, 1, 0.5), nrow = N )
+M</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    1    0    0
+## [2,]    0    0    1    0    1
+## [3,]    0    0    1    1    1
+## [4,]    1    1    1    0    0
+## [5,]    1    0    1    0    0</code></pre>
+<p>Now if we want to work with multiple layers, we can generate <code>k</code> matrices and store them in an <code>array</code> with dimensions <code>(N,N,k)</code>.</p>
+<pre class="r"><code>k &lt;- 4
+l &lt;- replicate( n = k, 
+                expr = matrix( rbinom(N^2, 1, 0.5), nrow = N )
+)
+l</code></pre>
+<pre><code>## , , 1
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    1    0    0    1
+## [2,]    0    1    1    0    1
+## [3,]    1    1    0    1    1
+## [4,]    1    0    1    0    1
+## [5,]    1    0    1    0    0
+## 
+## , , 2
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    1    0    0
+## [2,]    0    0    0    0    1
+## [3,]    0    1    1    0    1
+## [4,]    0    0    0    1    0
+## [5,]    0    0    1    1    0
+## 
+## , , 3
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    0    1    1
+## [2,]    0    0    0    0    0
+## [3,]    1    0    0    0    0
+## [4,]    1    0    1    1    1
+## [5,]    0    0    1    0    1
+## 
+## , , 4
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    1    1    0    0
+## [2,]    1    0    1    0    0
+## [3,]    0    0    0    1    1
+## [4,]    0    1    0    1    0
+## [5,]    1    1    1    1    0</code></pre>
+<pre class="r"><code>dim(l)</code></pre>
+<pre><code>## [1] 5 5 4</code></pre>
+<p>Alternatively, we can build an array directly, but this time we need <code>(N^2)*k</code> trials in order to fill every element of every matrix in the three dimensional array.</p>
+<pre class="r"><code>A &lt;- array( rbinom((N^2)*k, 1, 0.5), dim = c(N,N,k) )
+A</code></pre>
+<pre><code>## , , 1
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    0    1    0
+## [2,]    0    1    0    1    1
+## [3,]    1    0    0    0    1
+## [4,]    1    1    0    0    0
+## [5,]    1    1    0    0    0
+## 
+## , , 2
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    1    0    1
+## [2,]    0    0    0    0    1
+## [3,]    0    0    1    0    0
+## [4,]    1    1    1    0    1
+## [5,]    1    0    1    0    0
+## 
+## , , 3
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    1    0    1
+## [2,]    1    1    0    1    0
+## [3,]    0    0    1    0    0
+## [4,]    0    0    1    0    1
+## [5,]    0    1    1    1    0
+## 
+## , , 4
+## 
+##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    1    0    1    0    1
+## [2,]    0    0    1    0    0
+## [3,]    1    0    1    0    1
+## [4,]    0    1    1    0    1
+## [5,]    1    1    1    0    1</code></pre>
+<p>We can visualize each matrix as well.</p>
+<pre class="r"><code>par(mfrow=c(1,k))
+apply(A, MARGIN = 3, image, axes=F, col=c(&#39;black&#39;,&#39;cornflowerblue&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" width="960" /></p>
+<pre><code>## NULL</code></pre>
+</div>
+<div id="part-ii-a-generative-model" class="section level1">
+<h1>Part II: A generative model</h1>
+<p>Generating random arrays is fine, but when we look at them in sequence, the just look random flickering over time. What if we wanted to construct a network that <em>grows</em> randomly based on the previous conditions? The function below accomplishes this using the following steps:</p>
+<ol style="list-style-type: decimal">
+<li>Create an empty array with dimensions <code>(N,N,layers)</code> to hold results.</li>
+<li>Set an initial conditions by randomly selecting an element in the first matrix and assigning it a value of <code>1</code>.</li>
+<li>Using for loops, examine every element <code>[i,j]</code> in the current layer (<code>k</code>) and compare to the previous layer (<code>k-1</code>).
+<ol style="list-style-type: decimal">
+<li>If the element is filled, remain filled.</li>
+<li>If the element is empty, a slim chance that it gets filled.</li>
+</ol></li>
+<li>Return the complete array.</li>
+</ol>
+<pre class="r"><code>RandomGrowth &lt;- function(N, layers, p, seed=777, loops=F) {
+  set.seed(seed)
+  
+  # create an empty array to hold results
+  A &lt;- array(NA, dim = c(N,N,layers))
+  
+  # set initial condition by randomly selecting
+  init &lt;- matrix( rep(0, N^2), nrow = N )
+  init[ sample(1:N, 1), sample(1:N, 1) ] &lt;- 1
+  A[,,1] &lt;- init
+  
+  # loop through
+  for( k in 2:layers ) {
+    for( i in 1:N ) {
+      for( j in 1:N ) {
+        A[i,j,k] &lt;- ifelse( A[i,j,k-1] &gt; 0, 1, 
+                            rbinom(1, 1, prob = p))
+        if (loops == F) { diag(A[,,k]) &lt;- 0 } 
+      }
+    }
+  }
+  return(A)
+}</code></pre>
+<p>To use the function, we need to set the following:</p>
+<ul>
+<li><code>N</code> = the number of rows and columns in each matrix (i.e., number of nodes).</li>
+<li><code>layers</code> = the third dimension of the array; the number of matrix layers.</li>
+<li><code>p</code> = the probability that an empty cell is filled; this controls the growth rate.</li>
+</ul>
+<pre class="r"><code>N &lt;- 25
+k &lt;- 20
+p &lt;- 0.01
+new_A &lt;- RandomGrowth(N=N, layers=k, p=p, seed = 27, loops = T)</code></pre>
+<p>Now we can plot each matrix and see how the network grows.</p>
+<pre class="r"><code>par(mfrow=c(5,4), mar=c(1,1,1,1))
+apply(new_A, 3, image, axes=F, col=c(&#39;black&#39;,&#39;cornflowerblue&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" width="864" /></p>
+<pre><code>## NULL</code></pre>
+<p>It appears as though this network is growing in a slow, additive way. This is because the only spread that occurs is based on our random trial with probability <code>p</code>, which prevents each filled cell from invading neighboring empty cells. We can visualize the growth by plotting the density of each matrix at <code>k</code>.</p>
+<pre class="r"><code>plot(1:k, apply(new_A, 3, function(x) sum(x) / N^2), 
+     ylab=&#39;density&#39;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>But perhaps the additive pattern we are seeing is only because we didn’t let the network grow for long enough. What if we let the algorithm go longer by increasing <code>k</code>? Shouldn’t the array eventually fill up completely? If so, we should expect to see a logistic growth pattern.</p>
+<pre class="r"><code>N &lt;- 25
+k &lt;- 200
+p &lt;- 0.01
+new_A &lt;- RandomGrowth(N=N, layers=k, p=p, seed = 27, loops=T)
+
+par(mfrow=c(10,20), mar=c(0.1,0.1,0.1,0.1))
+apply(new_A, 3, image, axes=F, col=c(&#39;black&#39;,&#39;cornflowerblue&#39;))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
+<pre><code>## NULL</code></pre>
+<p>Now we calculate the density for every matrix in our 25 x 25 x 200 array and see if there is a logistic curve.</p>
+<pre class="r"><code>plot(1:k, apply(new_A, 3, function(x) sum(x) / N^2), 
+     ylab=&#39;density&#39;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+There you have it. A simple generative and random model of logistic growth.</p>
+<p>In the next post, I will explore extensions to this generative model where growth spreads across neighboring cells (e.g. cellular automata), and where nodes with the largest number of connections tend to gain more connections (e.g. preferential attachment).</p>
+<p>Maximum regards,</p>
+<p>SAS</p>
+</div>
