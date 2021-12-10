@@ -11,12 +11,45 @@ tags:
   - Data Analysis
 ---
 
-Multilevel models are a kind of statistical model in which model parameters vary at more than one level. They are very useful kind of model that is suited to the hierarchical and nested organization of the world we observe around us. Multilevel models help us understand and describe the variation within and between groups, and across multiple scales. 
+Multilevel models are a kind of statistical model that estimate parameters at more than one level. They are very useful kind of model because they are suited to the hierarchical and nested organization of the world around us.  In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from `brms`. 
 
-In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from `brms`. To do this, I will analyze the `palmerpenguins` dataset made available on github by [Allison Horst](https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1). These data describe multiple species of penguins -- Chinstrap, Gentoo, and Adelie -- that inhabit Antarctica. 
+```{r, message=F, warning=FALSE}
+options(mc.cores = parallel::detectCores(), scipen = 0)
+#install.packages('rstan')
+#install.packages('brms')
+library(brms)
+```
+
+
+For this demonstration, I will analyze the `palmerpenguins` dataset made available on github by [Allison Horst](https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1). These data describe multiple species of penguins -- Chinstrap, Gentoo, and Adelie -- that inhabit Antarctica. 
 
 ```{r, message=F, warning=F}
 #remotes::install_github('allisonhorst/palmerpenguins')
 library(palmerpenguins)
+data('penguins')
+d <- penguins
+head(d)
 ```
+The values that I want to predict in this data set are body mass, measured in grams (`body_mass_g`). The simplest model we could use to predict body mass would contain a single parameter, the `Intercept`, sometimes also called $\alpha$ in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in `brm` using the formula: `body_mass_g ~ 1`. 
+
+```{r, warning=F, message=F, eval=F}
+mod0 <- brm(data = d, family = gaussian(),
+            body_mass_g ~ 1)
+```
+
+```{r, warning=F, message=F,echo=F}
+mod0 <- brm(data = d, family = gaussian(),
+            body_mass_g ~ 1, 
+            file = "~/Shane's Projects/folio/content/post/2021-12-10-building-multilevel-models-with-brms/models/Model0-Intercept",
+            file_refit = 'on_change')
+```
+
+We can examine the estimate using `fixef()` -- which returns the estimates for all fixed effects in a `<brmsfit>` object.
+
+```{r}
+fixef(mod0)
+```
+
+The model estimates mean body mass (g) to be `4200.43` with `44.09` grams of error. This comparable to the value of ``r round(mean(d$body_mass_g, na.rm=T), digits=2)`` computed using `base` `R`.
+
 

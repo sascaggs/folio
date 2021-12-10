@@ -14,7 +14,7 @@ permalinks:
   post: /:year/:month/:day/:slug/
 menu:
   main:
-    - name: About
+    - name: About Shane
       url: /about/
     - name: Blog
       url: /post/
@@ -41,3 +41,8 @@ markup:
   goldmark:
     renderer:
       unsafe: yes
+  highlight:
+      codeFences: true
+      noClasses: true
+      style: Nord
+

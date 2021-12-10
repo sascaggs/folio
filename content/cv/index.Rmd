@@ -11,8 +11,10 @@ library(kableExtra)
 library(tidyverse)
 ```
 
+<br>
+<img src="/./about_files/mustache circle.png" alt="" width="25%" height="25%"/>
 
-## Title & Affiliation
+## Shane A. Scaggs
 <p style="text-align: left;">
 Graduate Research Fellow<br>
 [Human Complexity Lab](https://u.osu.edu/hclab/)<br>

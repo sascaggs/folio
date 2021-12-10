@@ -14,7 +14,32 @@ tags:
 <script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
 
 
-<p>Multilevel models are a kind of statistical model in which model parameters vary at more than one level. They are very useful kind of model that is suited to the hierarchical and nested organization of the world we observe around us. Multilevel models help us understand and describe the variation within and between groups, and across multiple scales.</p>
-<p>In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from <code>brms</code>. To do this, I will analyze the <code>palmerpenguins</code> dataset made available on github by <a href="https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1">Allison Horst</a>. These data describe multiple species of penguins – Chinstrap, Gentoo, and Adelie – that inhabit Antarctica.</p>
+<p>Multilevel models are a kind of statistical model that estimate parameters at more than one level. They are very useful kind of model because they are suited to the hierarchical and nested organization of the world around us. In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from <code>brms</code>.</p>
+<pre class="r"><code>options(mc.cores = parallel::detectCores(), scipen = 0)
+#install.packages(&#39;rstan&#39;)
+#install.packages(&#39;brms&#39;)
+library(brms)</code></pre>
+<p>For this demonstration, I will analyze the <code>palmerpenguins</code> dataset made available on github by <a href="https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1">Allison Horst</a>. These data describe multiple species of penguins – Chinstrap, Gentoo, and Adelie – that inhabit Antarctica.</p>
 <pre class="r"><code>#remotes::install_github(&#39;allisonhorst/palmerpenguins&#39;)
-library(palmerpenguins)</code></pre>
+library(palmerpenguins)
+data(&#39;penguins&#39;)
+d &lt;- penguins
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g sex  
+##   &lt;fct&gt;   &lt;fct&gt;           &lt;dbl&gt;         &lt;dbl&gt;            &lt;int&gt;       &lt;int&gt; &lt;fct&gt;
+## 1 Adelie  Torge~           39.1          18.7              181        3750 male 
+## 2 Adelie  Torge~           39.5          17.4              186        3800 fema~
+## 3 Adelie  Torge~           40.3          18                195        3250 fema~
+## 4 Adelie  Torge~           NA            NA                 NA          NA &lt;NA&gt; 
+## 5 Adelie  Torge~           36.7          19.3              193        3450 fema~
+## 6 Adelie  Torge~           39.3          20.6              190        3650 male 
+## # ... with 1 more variable: year &lt;int&gt;</code></pre>
+<p>The values that I want to predict in this data set are body mass, measured in grams (<code>body_mass_g</code>). The simplest model we could use to predict body mass would contain a single parameter, the <code>Intercept</code>, sometimes also called <span class="math inline">\(\alpha\)</span> in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in <code>brm</code> using the formula: <code>body_mass_g ~ 1</code>.</p>
+<pre class="r"><code>mod0 &lt;- brm(data = d, family = gaussian(),
+            body_mass_g ~ 1)</code></pre>
+<p>We can examine the estimate using <code>fixef()</code> – which returns the estimates for all fixed effects in a <code>&lt;brmsfit&gt;</code> object.</p>
+<pre class="r"><code>fixef(mod0)</code></pre>
+<pre><code>##           Estimate Est.Error    Q2.5    Q97.5
+## Intercept  4200.43   44.0927 4113.55 4288.291</code></pre>
+<p>The model estimates mean body mass (g) to be <code>4200.43</code> with <code>44.09</code> grams of error. This comparable to the value of <code>4201.75</code> computed using <code>base</code> <code>R</code>.</p>
