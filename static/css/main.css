@@ -121,11 +121,12 @@ img {
   margin-top: 12px;
   float: right;
   font-size: 10px;
-  padding: 1px 5px;
+  padding: 3px 6px;
   font-weight: bold;
-  border-radius: 3px;
-  background: #eee;
-  color: #3300ff
+  border-radius: 7px;
+  background: #3300ff22;
+  color: #3300ff;
+  border-color: #BDEDAC;
 }
 
 .article-content p {
