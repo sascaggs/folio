@@ -1,0 +1,20 @@
+---
+title: Multilevel models with {brms}
+author: Shane A. Scaggs
+date: '2021-12-10'
+slug: building-multilevel-models-with-brms
+categories:
+  - Statistics
+tags:
+  - Bayes
+  - Modeling
+  - Data Analysis
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Multilevel models are a kind of statistical model in which model parameters vary at more than one level. They are very useful kind of model that is suited to the hierarchical and nested organization of the world we observe around us. Multilevel models help us understand and describe the variation within and between groups, and across multiple scales.</p>
+<p>In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from <code>brms</code>. To do this, I will analyze the <code>palmerpenguins</code> dataset made available on github by <a href="https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1">Allison Horst</a>. These data describe multiple species of penguins – Chinstrap, Gentoo, and Adelie – that inhabit Antarctica.</p>
+<pre class="r"><code>#remotes::install_github(&#39;allisonhorst/palmerpenguins&#39;)
+library(palmerpenguins)</code></pre>

@@ -18,11 +18,13 @@ menu:
       url: /about/
     - name: Blog
       url: /post/
+    - name: Vitae
+      url: /cv/
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
   description: The personal website of Shane A. Scaggs.
-  favicon: 'images/pix_mustache.png'
+  favicon: 'images/pix_mustache2_haw.png'
   highlightjsCDN: //cdnjs.cloudflare.com/ajax/libs
   highlightjsLang:
     - r
@@ -32,7 +34,7 @@ params:
   logo:
     alt: Logo
     height: 50
-    url: pix_mustache.png
+    url: pix_mustache_tok.png
     width: 50
 markup:
   defaultMarkdownHandler: goldmark
