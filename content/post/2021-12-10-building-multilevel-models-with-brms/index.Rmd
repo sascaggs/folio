@@ -150,9 +150,6 @@ mod1b %>%
 
 The distributions in Figure 3 look hardly different from the distributions in Figure 2. What is this?? Well these figures both show the distribution of estimated mean values. The real variation lies in the uncertainty around these value. This we can see by visualizing the uncertainty. 
 
-```{r}
-mod1b %>% posterior_samples()
-```
 
 
 
