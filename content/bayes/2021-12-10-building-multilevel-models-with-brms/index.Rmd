@@ -1,8 +1,8 @@
 ---
-title: Building multilevel models with {brms}
+title: Building simple multilevel models with {brms}
 author: Shane A. Scaggs
 date: '2021-12-10'
-slug: building-multilevel-models-with-brms
+slug: building-simple-multilevel-models-with-brms
 categories:
   - Statistics
 tags:
@@ -24,13 +24,13 @@ library(tidyverse)
 
 ```{r, echo=F}
 sas_nogrid <- sas_nogrid <- theme(panel.background = element_rect(fill = 'white', colour = 'black'), 
-                    panel.border = element_rect(color='black', size=1.2, fill = '#00000000'), 
-                    panel.grid = element_blank(), 
-                    text = element_text(family = 'mono', size = 14),
-                    axis.ticks.length = unit(0.15, 'inch'), 
-                    axis.ticks = element_line(size=0.7), 
-                    strip.background = element_rect(fill = 'black', color = 'black'), 
-                    strip.text = element_text(color='white', face = 'bold'))
+                                  panel.border = element_rect(color='black', size=1.2, fill = '#00000000'), 
+                                  panel.grid = element_blank(), 
+                                  text = element_text(family = 'mono', size = 14, color = 'black'),
+                                  axis.ticks.length = unit(0.15, 'inch'), 
+                                  axis.ticks = element_line(size=0.7), 
+                                  strip.background = element_rect(fill = 'black', color = 'black'), 
+                                  strip.text = element_text(color='white', face = 'bold'))
 
 ```
 
@@ -67,7 +67,7 @@ mod0 <- brm(family = gaussian(), data = d,
 ```{r, warning=F, message=F,echo=F}
 mod0 <- brm(data = d, family = gaussian(),
             body_mass_g ~ 1, 
-            file = "~/Shane's Projects/folio/content/post/2021-12-10-building-multilevel-models-with-brms/models/Model0-Intercept",
+            file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model0-Intercept",
             file_refit = 'on_change')
 ```
 
@@ -81,7 +81,7 @@ If we generate `4000` draws from this model, and graph them, the distribution lo
 
 ```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of body mass (g).', fig.align='center'}
 mod0 %>% spread_draws(b_Intercept) %>%
-    ggplot(aes(b_Intercept)) + geom_density(fill='#3300ff33', color='#3300ff', lwd=1.2) + sas_nogrid + geom_vline(xintercept = 4200.43, lty=2)
+  ggplot(aes(b_Intercept)) + geom_density(fill='#3300ff33', color='#3300ff', lwd=1.2) + sas_nogrid + geom_vline(xintercept = 4200.43, lty=2)
 ```
 
 
@@ -97,14 +97,14 @@ to estimate a fixed intercept for each of the species groups in the dataset.
 
 ```{r, warning=F, message=F, eval=F}
 mod1a <- brm(data = d, family = gaussian(),
-            body_mass_g ~ 1 + species)
+             body_mass_g ~ 1 + species)
 ```
 
 ```{r, warning=F, message=F,echo=F}
 mod1a <- brm(data = d, family = gaussian(),
-            body_mass_g ~ 1 + species, 
-            file = "~/Shane's Projects/folio/content/post/2021-12-10-building-multilevel-models-with-brms/models/Model1a-FixedSpecies",
-            file_refit = 'on_change')
+             body_mass_g ~ 1 + species, 
+             file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model1a-FixedSpecies",
+             file_refit = 'on_change')
 ```
 
 We can examine the estimates by calling the model object inside the `fixef()` function. 
@@ -112,54 +112,96 @@ We can examine the estimates by calling the model object inside the `fixef()` fu
 fixef(mod1a)
 ```
 
-Here we see that `Adelie` and `Chinstrap` have relatively similar mean and error values, while the mean for `Gentoo` is much larger. Just how much body mass measurements overlap is every easier to see if we graph the posterior. 
+Here we see that the body mass of `Adelie` --  the reference category for `Intercept` -- and `Chinstrap` differ by just over `30` grams, while the mean for `Gentoo` is more than `1000` grams larger. Just how much these body mass measurements overlap is easier to see if we graph the posterior. 
 
-```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of body mass (g) for each penguin species.', fig.align='center'}
+```{r, echo=F, fig.width=5, fig.height=3, fig.cap='Posterior distribution of body mass (g) for each penguin species.', fig.align='center'}
 mod1a %>% 
-    spread_draws(b_speciesAdelie, b_speciesChinstrap, b_speciesGentoo) %>%
-    select(b_speciesAdelie, b_speciesChinstrap, b_speciesGentoo) %>%
-    gather(key = species, value = body_mass) %>%
-    mutate(species = str_remove(species, 'b_species')) %>%
-    ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
-    sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
-    theme(legend.position = c(0.55,0.5))
+  spread_draws(b_Intercept, b_speciesChinstrap, b_speciesGentoo) %>%
+  select(b_Intercept, b_speciesChinstrap, b_speciesGentoo) %>%
+  mutate(Adelie = b_Intercept, 
+         Chinstrap = b_Intercept + b_speciesChinstrap, 
+         Gentoo = b_Intercept + b_speciesGentoo) %>%
+  select(Adelie, Chinstrap, Gentoo) %>%
+  gather(key = species, value = body_mass) %>%
+  ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+  sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
+  labs(x='body_mass_g')
 ```
-Although the graph makes it clear that there are mean differences between species, the shape of the curve is based on the same `sigma` value for the entire population. Thus, our model *only* accounts for between species variation. To describe variation within and between species, we need allow random intercepts for each species. 
 
-We estimate random intercepts using a formula with following term: 
+To estimate random intercepts for each species, rather than fixed intercepts, we use the following model formula:
 
 > `body_mass_g ~(1|species)`
 
 ```{r, warning=F, message=F, eval=F}
 mod1b <- brm(data = d, family = gaussian(),
-            body_mass_g ~ (1|species))
+             body_mass_g ~ (1|species))
 ```
 
 ```{r, warning=F, message=F,echo=F}
 mod1b <- brm(data = d, family = gaussian(),
-            body_mass_g ~ (1|species), 
-            file = "~/Shane's Projects/folio/content/post/2021-12-10-building-multilevel-models-with-brms/models/Model1b-RandomSpecies",
-            file_refit = 'on_change')
+             body_mass_g ~ (1|species), 
+             file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model1b-RandomSpecies",
+             file_refit = 'on_change')
 ```
 
-To view this model, we use `ranef()` -- for random effects -- instead of `fixef()`. 
+This model estimates a "global" fixed intercept: 
+
+```{r}
+fixef(mod1b)
+```
+
+and then separate random intercepts for each species, reported as differences from the global intercept:
 
 ```{r}
 ranef(mod1b)
 ```
-We see a similar structure but with very different estimates and error. The estimate represent differences between the mean body size for each species (level 1) and the population mean (level 2). Let's plot this posterior and see how it compares to `mod1a`. 
 
-```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of random intercepts of body mass (g) for each penguin species.', fig.align='center'}
+Ultimately, this model will produce posterior distributions that look very similar to the fixed effect model: 
+
+```{r, echo=F, fig.width=5, fig.height=3, fig.cap='Posterior distribution of body mass (g) based on random intercepts for each penguin species.', fig.align='center'}
 mod1b %>% 
-    spread_draws(b_Intercept, r_species[species,]) %>%
-    mutate(body_mass = b_Intercept + r_species) %>%
-    ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
-    sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
-    theme(legend.position = c(0.55,0.5))
+  spread_draws(b_Intercept, r_species[species,]) %>%
+  mutate(body_mass = b_Intercept + r_species) %>%
+  ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+  sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) 
 ```
 
-The distributions in Figure 3 look hardly different from the distributions in Figure 2. What is this?? Well these figures both show the distribution of estimated mean values. The real variation lies in the uncertainty around these value. This we can see by visualizing the uncertainty. 
+However, there is a key difference between the fixed and random effects models. The random effects model has a much greater amount of uncertainty when compared to the fixed effects. This can be seen in the following dotplot, which shows the coefficient estimates for each model and the error around these estimates.
 
+```{r, warning=F, message=F, echo=F, fig.width=6, fig.height=3, fig.cap='Intercept and beta coefficients fixed and random effects models. Lines indicate estimated error.', fig.align='center'}
+
+fe <- as.data.frame(fixef(mod1a)[,1:2])
+fe$Model <- 'fixed'
+rownames(fe) <- c('Adelie\n(Intercept)','Chinstrap','Gentoo')
+
+re <- as.data.frame((ranef(mod1b)$species)[,1:2,])
+re$Model <- 'random'
+re[1,1] <- -436.8614 + 4137.384
+re[1,2] <- mean(c(475.0701, 474.9684))
+rownames(re) <- c('Adelie\n(Intercept)','Chinstrap','Gentoo')
+df <- rbind(fe,re)
+df$species <- rownames(df)
+
+df %>% 
+  mutate(species = str_remove(species, '1')) %>%
+  ggplot(aes(Estimate, species)) + 
+  geom_point(aes(color=Model),pch=21, position = position_dodge(width = 0.5)) + sas_nogrid + 
+  geom_errorbar(aes(xmin = Estimate - Est.Error, 
+                    xmax = Estimate + Est.Error,
+                    color = Model), 
+                position = position_dodge(width = 0.5),
+                size = 0.7, width = 0) + 
+  scico::scale_color_scico_d(palette = 'lajolla', begin = 0.6) + 
+  geom_vline(xintercept = 0, lty=2) + labs(y='')
+  
+  
+```
+
+It is also noteworthy that the fixed effects model, suggested that `Chinstrap` was larger, on average, than `Adelie`. The random effects model, however, shows the opposite. 
+
+## Epilogue 
+
+I am researcher who was trained in frequentist statistics and then shifted to Bayesian statistics. Having transitioned, one of the most glaring differences (among many others) I've noticed is that in frequentism, there is a strong emphasis on coefficient effects, and a weak emphasis on uncertainty and model error. I find this to be the opposite in Bayesian statistics which has a central goal of understanding and incorporating model uncertainty. 
 
 
 

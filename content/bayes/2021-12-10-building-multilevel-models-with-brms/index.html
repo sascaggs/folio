@@ -1,8 +1,8 @@
 ---
-title: Multilevel models with {brms}
+title: Building simple multilevel models with {brms}
 author: Shane A. Scaggs
 date: '2021-12-10'
-slug: building-multilevel-models-with-brms
+slug: building-simple-multilevel-models-with-brms
 categories:
   - Statistics
 tags:
@@ -49,7 +49,7 @@ head(d)</code></pre>
 <p>The model formula is simple: <code>body_mass_g ~ 1</code>.</p>
 <pre class="r"><code>mod0 &lt;- brm(family = gaussian(), data = d,
             body_mass_g ~ 1)</code></pre>
-<p>We can examine the posterior estimates using <code>posterior_summary()</code>, which returns all fixed and random effect estimate by a <code>&lt;brmsfit&gt;</code> object. According to this model, the mean body mass (g) of all the Penguins is <code>4200.43</code>, surrounded by <code>44.09</code> grams of error. This value is comparable to the value computed using <code>base</code> <code>R</code> (mean = <code>4201.75</code>. The Gaussian family also estimates a <code>sigma</code> value of <code>802.90</code>, which is comparable to the standard deviation (sd = <code>801.95</code>)</p>
+<p>We can examine the posterior estimates using <code>posterior_summary()</code>, which returns all fixed and random effect estimate by a <code>&lt;brmsfit&gt;</code> object. According to this model, the mean body mass (g) of all the Penguins is <code>4200.43</code>, surrounded by <code>44.09</code> grams of error. This value is comparable to the value computed using <code>base</code> <code>R</code> (mean = <code>4201.75</code>). This model also estimates a <code>sigma</code> value of <code>802.90</code>, which is comparable to the standard deviation (sd = <code>801.95</code>)</p>
 <pre class="r"><code>posterior_summary(mod0)</code></pre>
 <pre><code>##               Estimate Est.Error       Q2.5      Q97.5
 ## b_Intercept  4200.4297 44.092696  4113.5505  4288.2908
@@ -65,35 +65,38 @@ Figure 1: Posterior distribution of body mass (g).
 </div>
 <div id="species-variation-fixed-and-random" class="section level2">
 <h2>Species variation, fixed and random</h2>
-<p>A sensible biologist might point out that body mass probably varies across each species of penguin. We can assess by adding a <strong>fixed effect</strong> of species to our model. This will estimate how mean at the population level varies across groups (i.e., multiple intercepts). It will not, however, help us understand how body mass varies <em>within</em> each species. To do that, we need estimate <strong>random intercepts</strong> for each species group. We’ll fit both models to illustrate the difference.</p>
-<p>For the fixed effect model, we add a covariate for species to our model formula:</p>
+<p>A sensible biologist might point out that body mass probably varies across each species of penguin. We can assess this by adding a <strong>fixed effect</strong> of species to our model that will estimate the body mass for each species. It will not, however, help us understand how body mass varies <em>within</em> each species. To do that, we need estimate <strong>random intercepts</strong> for each species group. We’ll fit both models to illustrate the difference.</p>
+<p>For the fixed effect model, we add the <code>species</code> factor to our model formula:</p>
 <blockquote>
-<p><code>body_mass_g ~ -1 + species</code></p>
+<p><code>body_mass_g ~ 1 + species</code></p>
 </blockquote>
-<p>This formula will estimate a fixed intercept for each of the species groups in the dataset. The <code>-1</code> tells <code>brms</code> not to estimate an overall mean, but instead to estimate separate means.</p>
+<p>to estimate a fixed intercept for each of the species groups in the dataset.</p>
 <pre class="r"><code>mod1a &lt;- brm(data = d, family = gaussian(),
-            body_mass_g ~ -1 + species)</code></pre>
+             body_mass_g ~ 1 + species)</code></pre>
 <p>We can examine the estimates by calling the model object inside the <code>fixef()</code> function.</p>
 <pre class="r"><code>fixef(mod1a)</code></pre>
-<pre><code>##                  Estimate Est.Error     Q2.5    Q97.5
-## speciesAdelie    3700.254  37.18079 3627.524 3772.018
-## speciesChinstrap 3733.690  55.54087 3624.735 3843.410
-## speciesGentoo    5075.702  41.61432 4993.328 5157.074</code></pre>
-<p>Here we see that <code>Adelie</code> and <code>Chinstrap</code> have relatively similar mean and error values, while the mean for <code>Gentoo</code> is much larger. Just how much body mass measurements overlap is every easier to see if we graph the posterior.</p>
+<pre><code>##                    Estimate Est.Error       Q2.5    Q97.5
+## Intercept        3699.30800  37.83725 3626.01355 3773.607
+## speciesChinstrap   34.42233  66.21556  -90.93979  169.296
+## speciesGentoo    1376.99499  55.43538 1268.97901 1484.461</code></pre>
+<p>Here we see that the body mass of <code>Adelie</code> – the reference category for <code>Intercept</code> – and <code>Chinstrap</code> differ by just over <code>30</code> grams, while the mean for <code>Gentoo</code> is more than <code>1000</code> grams larger. Just how much these body mass measurements overlap is easier to see if we graph the posterior.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-12"></span>
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" alt="Posterior distribution of body mass (g) for each penguin species." width="384" />
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" alt="Posterior distribution of body mass (g) for each penguin species." width="480" />
 <p class="caption">
 Figure 2: Posterior distribution of body mass (g) for each penguin species.
 </p>
 </div>
-<p>Although the graph makes it clear that there are mean differences between species, the shape of the curve is based on the same <code>sigma</code> value for the entire population. Thus, our model <em>only</em> accounts for between species variation. To describe variation within and between species, we need allow random intercepts for each species.</p>
-<p>We estimate random intercepts using a formula with following term:</p>
+<p>To estimate random intercepts for each species, rather than fixed intercepts, we use the following model formula:</p>
 <blockquote>
 <p><code>body_mass_g ~(1|species)</code></p>
 </blockquote>
 <pre class="r"><code>mod1b &lt;- brm(data = d, family = gaussian(),
-            body_mass_g ~ (1|species))</code></pre>
-<p>To view this model, we use <code>ranef()</code> – for random effects – instead of <code>fixef()</code>.</p>
+             body_mass_g ~ (1|species))</code></pre>
+<p>This model estimates a “global” fixed intercept:</p>
+<pre class="r"><code>fixef(mod1b)</code></pre>
+<pre><code>##           Estimate Est.Error     Q2.5    Q97.5
+## Intercept 4137.384  474.9684 3189.271 5099.052</code></pre>
+<p>and then separate random intercepts for each species, reported as differences from the global intercept:</p>
 <pre class="r"><code>ranef(mod1b)</code></pre>
 <pre><code>## $species
 ## , , Intercept
@@ -102,12 +105,23 @@ Figure 2: Posterior distribution of body mass (g) for each penguin species.
 ## Adelie    -436.8614  475.0701 -1393.77848  519.5484
 ## Chinstrap -402.0018  476.5776 -1362.65912  560.6884
 ## Gentoo     935.9014  475.6870   -23.49855 1896.1221</code></pre>
-<p>We see a similar structure but with very different estimates and error. The estimate represent differences between the mean body size for each species (level 1) and the population mean (level 2). Let’s plot this posterior and see how it compares to <code>mod1a</code>.</p>
-<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-16"></span>
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" alt="Posterior distribution of random intercepts of body mass (g) for each penguin species." width="384" />
+<p>Ultimately, this model will produce posterior distributions that look very similar to the fixed effect model:</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-17"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" alt="Posterior distribution of body mass (g) based on random intercepts for each penguin species." width="480" />
 <p class="caption">
-Figure 3: Posterior distribution of random intercepts of body mass (g) for each penguin species.
+Figure 3: Posterior distribution of body mass (g) based on random intercepts for each penguin species.
 </p>
 </div>
-<p>The distributions in Figure 3 look hardly different from the distributions in Figure 2. What is this?? Well these figures both show the distribution of estimated mean values. The real variation lies in the uncertainty around these value. This we can see by visualizing the uncertainty.</p>
+<p>However, there is a key difference between the fixed and random effects models. The random effects model has a much greater amount of uncertainty when compared to the fixed effects. This can be seen in the following dotplot, which shows the coefficient estimates for each model and the error around these estimates.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-18"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" alt="Intercept and beta coefficients fixed and random effects models. Lines indicate estimated error." width="576" />
+<p class="caption">
+Figure 4: Intercept and beta coefficients fixed and random effects models. Lines indicate estimated error.
+</p>
+</div>
+<p>It is also noteworthy that the fixed effects model, suggested that <code>Chinstrap</code> was larger, on average, than <code>Adelie</code>. The random effects model, however, shows the opposite.</p>
+</div>
+<div id="epilogue" class="section level2">
+<h2>Epilogue</h2>
+<p>I am researcher who was trained in frequentist statistics and then shifted to Bayesian statistics. Having transitioned, one of the most glaring differences (among many others) I’ve noticed is that in frequentism, there is a strong emphasis on coefficient effects, and a weak emphasis on uncertainty and model error. I find this to be the opposite in Bayesian statistics which has a central goal of understanding and incorporating model uncertainty.</p>
 </div>
