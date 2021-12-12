@@ -1,6 +1,6 @@
 baseurl: https://shanescaggs.netlify.app/
 languageCode: en-us
-title: A Hugo website
+title: Shane A. Scaggs
 theme: hugo-lithium
 googleAnalytics: ''
 disqusShortname: ''
@@ -14,12 +14,21 @@ permalinks:
   post: /:year/:month/:day/:slug/
 menu:
   main:
-    - name: About Shane
+    - name: About
       url: /about/
-    - name: Blog
+      weight: 1
+    - name: Musings
       url: /post/
-    - name: Vitae
+      weight: 5
+    - name: SNA
+      url: /networks/
+      weight: 3
+    - name: Bayes
+      url: /bayes/
+      weight: 4
+    - name: CV
       url: /cv/
+      weight: 2
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5

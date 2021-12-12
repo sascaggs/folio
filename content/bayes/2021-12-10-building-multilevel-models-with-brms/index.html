@@ -21,7 +21,7 @@ tags:
 library(brms)
 library(tidybayes)
 library(tidyverse)</code></pre>
-<p>For this demonstration, I will analyze the <code>palmerpenguins</code> dataset made available on github by <a href="https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1">Allison Horst</a>. These data describe multiple species of penguins – Chinstrap, Gentoo, and Adelie – that inhabit Antarctica.</p>
+<p>For this demonstration, let’s model the <code>palmerpenguins</code> dataset made available on github by <a href="https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1">Allison Horst</a>. These data contain morphometrics for three species of penguins – Chinstrap, Gentoo, and Adelie – and the names of the islands they inhabit in Antarctica.</p>
 <pre class="r"><code>#remotes::install_github(&#39;allisonhorst/palmerpenguins&#39;)
 library(palmerpenguins)
 data(&#39;penguins&#39;)
@@ -37,20 +37,27 @@ head(d)</code></pre>
 ## 5 Adelie  Torge~           36.7          19.3              193        3450 fema~
 ## 6 Adelie  Torge~           39.3          20.6              190        3650 male 
 ## # ... with 1 more variable: year &lt;int&gt;</code></pre>
-<div id="the-most-simple-model" class="section level2">
-<h2>The most simple model</h2>
-<p>The values that I want to predict in this data set are body mass, measured in grams (<code>body_mass_g</code>). The simplest model we could use to predict body mass would contain a single parameter, the <code>Intercept</code>, sometimes also called <span class="math inline">\(\alpha\)</span> in statistical notation. This model estimates a grand mean body mass of all penguins in the data set, and the uncertainty around the estimate. We specify this model in <code>brm</code> using the formula: <code>body_mass_g ~ 1</code>. This is <em>not a multilevel</em> model because we are estimating two parameters – <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span> – only at the population level.</p>
-<pre class="r"><code>mod0 &lt;- brm(data = d, family = gaussian(),
+<div id="start-simple" class="section level2">
+<h2>Start simple</h2>
+<p>Let’s model penguin body mass (<code>body_mass_g</code>). A simple starting model would be to estimate the central tendency and variation in body masses across all penguins. We can do this by estimating the parameters mu (<span class="math inline">\(\mu\)</span>) and sigma (<span class="math inline">\(\sigma\)</span>) with a Gaussian family.</p>
+<p>For now, we will use the default <code>brms</code> priors. You can view them by calling the model formula, data, and family:</p>
+<pre class="r"><code>get_prior(body_mass_g ~ 1, 
+          family = gaussian(), data = d)</code></pre>
+<pre><code>##                      prior     class coef group resp dpar nlpar bound  source
+##  student_t(3, 4050, 889.6) Intercept                                  default
+##     student_t(3, 0, 889.6)     sigma                                  default</code></pre>
+<p>The model formula is simple: <code>body_mass_g ~ 1</code>.</p>
+<pre class="r"><code>mod0 &lt;- brm(family = gaussian(), data = d,
             body_mass_g ~ 1)</code></pre>
-<p>We can examine the estimates using <code>posterior_summary()</code> – which returns the estimates for all estimated parameters in a <code>&lt;brmsfit&gt;</code> object. The model estimates mean body mass (g) to be <code>4200.43</code> with <code>44.09</code> grams of error. This comparable to the value of <code>4201.75</code> computed using <code>base</code> <code>R</code>. The Gaussian family also estimates a <code>sigma</code> value of <code>802.90</code>, which is comparable to the standard deviation (sd = <code>801.95</code>)</p>
+<p>We can examine the posterior estimates using <code>posterior_summary()</code>, which returns all fixed and random effect estimate by a <code>&lt;brmsfit&gt;</code> object. According to this model, the mean body mass (g) of all the Penguins is <code>4200.43</code>, surrounded by <code>44.09</code> grams of error. This value is comparable to the value computed using <code>base</code> <code>R</code> (mean = <code>4201.75</code>. The Gaussian family also estimates a <code>sigma</code> value of <code>802.90</code>, which is comparable to the standard deviation (sd = <code>801.95</code>)</p>
 <pre class="r"><code>posterior_summary(mod0)</code></pre>
 <pre><code>##               Estimate Est.Error       Q2.5      Q97.5
 ## b_Intercept  4200.4297 44.092696  4113.5505  4288.2908
 ## sigma         802.9045 31.099490   744.5619   867.5428
 ## lp__        -2781.4773  1.027485 -2784.2627 -2780.4728</code></pre>
-<p>Another way to describe the mean and uncertainty of the <code>Intercept</code> parameter is to generate draws from the posterior and graph the distribution of body mass values. There are many ways to generate draws and graph distributions, but a full description of these methods is beyond the scope of this post.</p>
-<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-7"></span>
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" alt="Posterior distribution of body mass (g)." width="384" />
+<p>If we generate <code>4000</code> draws from this model, and graph them, the distribution looks something like this:</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-8"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" alt="Posterior distribution of body mass (g)." width="384" />
 <p class="caption">
 Figure 1: Posterior distribution of body mass (g).
 </p>
@@ -73,8 +80,8 @@ Figure 1: Posterior distribution of body mass (g).
 ## speciesChinstrap 3733.690  55.54087 3624.735 3843.410
 ## speciesGentoo    5075.702  41.61432 4993.328 5157.074</code></pre>
 <p>Here we see that <code>Adelie</code> and <code>Chinstrap</code> have relatively similar mean and error values, while the mean for <code>Gentoo</code> is much larger. Just how much body mass measurements overlap is every easier to see if we graph the posterior.</p>
-<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-11"></span>
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" alt="Posterior distribution of body mass (g) for each penguin species." width="384" />
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-12"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" alt="Posterior distribution of body mass (g) for each penguin species." width="384" />
 <p class="caption">
 Figure 2: Posterior distribution of body mass (g) for each penguin species.
 </p>
@@ -96,8 +103,8 @@ Figure 2: Posterior distribution of body mass (g) for each penguin species.
 ## Chinstrap -402.0018  476.5776 -1362.65912  560.6884
 ## Gentoo     935.9014  475.6870   -23.49855 1896.1221</code></pre>
 <p>We see a similar structure but with very different estimates and error. The estimate represent differences between the mean body size for each species (level 1) and the population mean (level 2). Let’s plot this posterior and see how it compares to <code>mod1a</code>.</p>
-<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-15"></span>
-<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" alt="Posterior distribution of random intercepts of body mass (g) for each penguin species." width="384" />
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-16"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" alt="Posterior distribution of random intercepts of body mass (g) for each penguin species." width="384" />
 <p class="caption">
 Figure 3: Posterior distribution of random intercepts of body mass (g) for each penguin species.
 </p>

@@ -1,0 +1,15 @@
+---
+title: 'Unit 1: Network theory and science'
+author: Shane A. Scaggs
+date: '2021-12-12'
+slug: unit-1-network-theory-and-science
+categories:
+  - Networks
+tags:
+  - social network analysis
+  - teaching
+  - concepts
+  - theory
+  - instruction
+---
+

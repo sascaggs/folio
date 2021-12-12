@@ -11,9 +11,6 @@ library(kableExtra)
 library(tidyverse)
 ```
 
-<br>
-<img src="/./about_files/mustache circle.png" alt="" width="25%" height="25%"/>
-
 ## Shane A. Scaggs
 <p style="text-align: left;">
 Graduate Research Fellow<br>
@@ -28,7 +25,7 @@ scaggs.32@osu.edu</p>
 
 ```{r,echo=F}
 edu <- read.csv(file = "~/Shane's Projects/folio/static/csv/edu.csv")
-knitr::kable(edu)
+edu %>% kbl(align = 'l') %>% column_spec(1, width = '0.5in')
 ```
 
 ## Publications
@@ -37,9 +34,10 @@ knitr::kable(edu)
 pubs <- read.csv(file = "~/Shane's Projects/folio/static/csv/pubs.csv")
 colnames(pubs) <- c('Year','Citation','DOI','Type')
 
-pubs[,1:3] %>% 
-    arrange(desc(Year)) %>%
-    kbl()  
+pubs$Citation <- paste(pubs$Citation, pubs$DOI, sep = ' ')
+
+pubs[,1:2] %>% kbl(align = 'l') %>%
+    column_spec(1, width = '0.5in')
 
 ```
 
@@ -48,7 +46,7 @@ pubs[,1:3] %>%
 ```{r,echo=F}
 funds <- read.csv(file = "~/Shane's Projects/folio/static/csv/funds.csv")
 colnames(funds) <- c("Year","Title","Funding Agency","Amount")
-knitr::kable(funds)
+funds %>% kbl(align = 'l') %>% column_spec(1, width = '0.5in')
 ```
 
 ## Conference Proceedings 
@@ -58,6 +56,7 @@ conf <- read.csv(file = "~/Shane's Projects/folio/static/csv/conf.csv")
 colnames(conf) <- c("Year","Title","Meeting","Type")
 conf[,1:4] %>% 
     arrange(desc( Year)) %>%
-    kbl()  
+    kbl(align = 'l') %>% 
+    column_spec(1, width = '0.5in')
 
 ```
