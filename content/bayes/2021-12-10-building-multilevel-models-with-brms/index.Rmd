@@ -161,8 +161,8 @@ Ultimately, this model will produce posterior distributions that look very simil
 ```{r, echo=F, fig.width=5, fig.height=3, fig.cap='Posterior distribution of body mass (g) based on random intercepts for each penguin species.', fig.align='center'}
 mod1b %>% 
   spread_draws(b_Intercept, r_species[species,]) %>%
-  mutate(body_mass = b_Intercept + r_species) %>%
-  ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+  mutate(body_mass_g = b_Intercept + r_species) %>%
+  ggplot(aes(body_mass_g)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
   sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) 
 ```
 
@@ -197,11 +197,13 @@ df %>%
   
 ```
 
-It is also noteworthy that the fixed effects model, suggested that `Chinstrap` was larger, on average, than `Adelie`. The random effects model, however, shows the opposite. 
+There is a tendency to view high uncertainty as a marker of defeat. This should not be the case. Having a better estimation of model uncertainty (combined with good theory) is a necessary condition for valid causal inference.  
 
-## Epilogue 
+## Endnotes 
 
-I am researcher who was trained in frequentist statistics and then shifted to Bayesian statistics. Having transitioned, one of the most glaring differences (among many others) I've noticed is that in frequentism, there is a strong emphasis on coefficient effects, and a weak emphasis on uncertainty and model error. I find this to be the opposite in Bayesian statistics which has a central goal of understanding and incorporating model uncertainty. 
+1. As with all MCMC models, your results may differ slightly than mine. I did not bother to set the `seed =` parameter in `brm`, so you'll not be able to reproduce each decimal exactly. 
+
+2. I've hidden many of the plotting details for brevity. I can elaborate more on these in future posts. For now, check out the work of [Solomon Kurz](https://solomonkurz.netlify.app/) to learn more about using `tidyverse` and `tidybayes` to visualize Bayesian models. 
 
 
 
