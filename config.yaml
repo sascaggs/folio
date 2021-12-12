@@ -17,9 +17,6 @@ menu:
     - name: About
       url: /about/
       weight: 1
-    - name: Musings
-      url: /post/
-      weight: 5
     - name: SNA
       url: /networks/
       weight: 3

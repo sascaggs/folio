@@ -1,8 +1,8 @@
 ---
-title: 'Unit 1: Network theory and science'
+title: 'Unit 1: Foundational network concepts'
 author: Shane A. Scaggs
 date: '2021-12-12'
-slug: unit-1-network-theory-and-science
+slug: unit-1-foundational-network-concepts
 categories:
   - Networks
 tags:
