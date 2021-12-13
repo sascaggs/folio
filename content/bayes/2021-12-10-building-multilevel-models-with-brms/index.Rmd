@@ -9,6 +9,7 @@ tags:
   - Bayes
   - Modeling
   - Data Analysis
+draft: yes
 ---
 
 Multilevel models are a kind of statistical model that estimate parameters at more than one level. They are very useful kind of model because they are suited to the hierarchical and nested organization of the world around us.  In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from `brms`. 
