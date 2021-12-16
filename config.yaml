@@ -40,7 +40,7 @@ params:
   logo:
     alt: Logo
     height: 50
-    url: pix_mustache_tok.png
+    url: pix_mustache2_header.png
     width: 50
 markup:
   defaultMarkdownHandler: goldmark
