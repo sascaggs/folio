@@ -9,6 +9,7 @@ tags:
   - Bayes
   - Modeling
   - Data Analysis
+draft: yes
 ---
 
 <script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
@@ -46,7 +47,7 @@ head(d)</code></pre>
 <pre><code>##                      prior     class coef group resp dpar nlpar bound  source
 ##  student_t(3, 4050, 889.6) Intercept                                  default
 ##     student_t(3, 0, 889.6)     sigma                                  default</code></pre>
-<p>The model formula is simple: <code>body_mass_g ~ 1</code>.</p>
+<p>The model formula is truly as simple as it can be: <code>body_mass_g ~ 1</code>. We estimate a single fixed intercept.</p>
 <pre class="r"><code>mod0 &lt;- brm(family = gaussian(), data = d,
             body_mass_g ~ 1)</code></pre>
 <p>We can examine the posterior estimates using <code>posterior_summary()</code>, which returns all fixed and random effect estimate by a <code>&lt;brmsfit&gt;</code> object. According to this model, the mean body mass (g) of all the Penguins is <code>4200.43</code>, surrounded by <code>44.09</code> grams of error. This value is comparable to the value computed using <code>base</code> <code>R</code> (mean = <code>4201.75</code>). This model also estimates a <code>sigma</code> value of <code>802.90</code>, which is comparable to the standard deviation (sd = <code>801.95</code>)</p>

@@ -58,7 +58,7 @@ get_prior(body_mass_g ~ 1,
           family = gaussian(), data = d)
 ```
 
-The model formula is simple: `body_mass_g ~ 1`.  
+The model formula is truly as simple as it can be: `body_mass_g ~ 1`. We estimate a single fixed intercept.   
 
 ```{r, warning=F, message=F, eval=F}
 mod0 <- brm(family = gaussian(), data = d,
