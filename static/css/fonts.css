@@ -70,7 +70,7 @@ body {
 h1, h2, h3, h4, h5, h6, .article-duration, .archive-item-link, .footer {
   font-family: 'Fira Sans', sans-serif;
 }
-.nav, .archive-item-date {
+.nav, .archive-item-date, .article-date {
   font-family: 'Lekton', monospace;
   font-size: 100%;
 }

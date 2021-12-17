@@ -26,6 +26,9 @@ menu:
     - name: CV
       url: /cv/
       weight: 2
+    #- name: Data Art
+    #  url: /data_art/
+    #  weight: 5
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
