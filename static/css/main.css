@@ -195,7 +195,7 @@ img {
 }
 
 .archive-item-date {
-  color: #ccc;
+  color: #3300ff;
   font-size: 14px;
   padding: 5px 0;
   margin-top: 5px;
@@ -310,6 +310,7 @@ img {
     font-size: 19px;
     text-align: right;
     float: right;
+    color: #3300ff;
   }
 
   .archive-item-link {
