@@ -1,5 +1,5 @@
 ---
-title: 'Unit 1: Foundational concepts in network science'
+title: 'Foundational concepts in network science'
 author: Shane A. Scaggs
 date: '2021-12-12'
 slug: unit-1-foundational-network-concepts
