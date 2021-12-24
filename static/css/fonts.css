@@ -98,16 +98,12 @@ h1, h2, h3, h4, h5, h6, .article-duration, .archive-item-link, .footer {
   font-family: 'Fira Sans', sans-serif;
 }
 .nav {
-  font-family: 'Lekton', sans-serif;
+  font-family: 'Lekton', monospace;
   font-weight: 700;
   font-size: 100%;
 }
 
-.archive-item-date, .article-date {
-  font-family: 'Lekton', sans-serif;
-  font-size: 100%;
-}
-code {
+code, .archive-item-date, .article-date {
   font-family: 'Lekton', monospace;
   font-size: 100%;
 }
