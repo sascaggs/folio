@@ -19,16 +19,18 @@ Department of Anthropology<br>
 The Ohio State University<br>
 scaggs.32@osu.edu</p>
 
+### Research Interests 
 
+Human Subsistence $\times$ Cooperation and Interspecies Coexistence $\times$ Dietary Diversity $\times$ Food Webs $\times$ Network Science $\times$ Complex Social-Ecological Systems $\times$ Community and Wildlife Ecology  
 
-## Education
+### Education
 
 ```{r,echo=F}
 edu <- read.csv(file = "~/Shane's Projects/folio/static/csv/edu.csv")
 edu %>% kbl(align = 'l') %>% column_spec(1, width = '0.5in')
 ```
 
-## Publications
+### Publications
 
 ```{r,echo=F}
 pubs <- read.csv(file = "~/Shane's Projects/folio/static/csv/pubs.csv")
@@ -41,7 +43,7 @@ pubs[,1:2] %>% kbl(align = 'l') %>%
 
 ```
 
-## Funding Support
+### Funding Support
 
 ```{r,echo=F}
 funds <- read.csv(file = "~/Shane's Projects/folio/static/csv/funds.csv")
@@ -49,7 +51,7 @@ colnames(funds) <- c("Year","Title","Funding Agency","Amount")
 funds %>% kbl(align = 'l') %>% column_spec(1, width = '0.5in')
 ```
 
-## Conference Proceedings 
+### Conference Proceedings 
 
 ```{r,echo=F}
 conf <- read.csv(file = "~/Shane's Projects/folio/static/csv/conf.csv")
