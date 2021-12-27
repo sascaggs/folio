@@ -25,6 +25,11 @@ a {
   outline: none;
 }
 
+a:link {
+  color: #3300ff;
+  text-decoration: none;
+}
+
 code {
   color: #3300ff;
   background-color: rgba(0, 0, 0, 0.02);
@@ -107,6 +112,25 @@ img {
 .nav-links a:focus {
   color: #61E5C9;
 }
+
+.terms a:hover,
+.terms a:focus {
+  color: #309C92;
+  border-bottom: 2px solid;
+  border-bottom-color: #309C92;
+} 
+
+.terms {
+  font-size: 12px;
+  display: inline-block;
+  text-decoration: none;
+  color: #111;
+  padding: 1px 0;
+  border-bottom: 2px solid #ddd;
+  width: 100%;
+}
+
+
 
 
 /* control width of content text */
