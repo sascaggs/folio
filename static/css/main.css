@@ -149,15 +149,15 @@ img {
 .article-content a {
   text-decoration: none;
   color: inherit;
-  border-bottom: 3px solid #3300ff33;
-  box-shadow: inset 0 -4px 0 #BDEDAC;
+  border-bottom: 3px solid #3300ff;
+  box-shadow: inset 0 -4px 0 #309C92;
   background: transparent;
   transition: background 150ms ease;
 }
 
 .article-content a:hover,
 .article-content a:focus {
-  background: #BDEDAC;
+  background: #309C9233;
 }
 
 .article-content hr {

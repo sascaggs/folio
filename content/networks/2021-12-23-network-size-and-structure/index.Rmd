@@ -12,6 +12,8 @@ tags:
   - scale
 ---
 
+*This post is also available on the [Social Ecological Networks Group](https://seng.netlify.app).*
+
 ```{r, message=F, echo=F, warning=F}
 library(igraph)
 library(statnet)
