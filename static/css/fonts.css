@@ -171,7 +171,7 @@
        url('../fonts/lekton-v12-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
        url('../fonts/lekton-v12-latin-regular.svg#Lekton') format('svg'); /* Legacy iOS */
 }
-body, .article-duration, .archive-item-link, .footer {
+body,  .archive-item-link, .footer {
   font-family: 'Fira Sans', sans-serif;
 }
 h1, h2, h3, h4, h5, h6, .nav {
@@ -179,7 +179,7 @@ h1, h2, h3, h4, h5, h6, .nav {
 }
 
 
-code, .archive-item-date, .article-date, .terms {
+code, .archive-item-date, .article-duration, .article-date, .terms {
   font-family: 'Lekton', monospace;
   font-size: 100%;
 }
