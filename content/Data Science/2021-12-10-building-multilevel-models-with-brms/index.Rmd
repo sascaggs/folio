@@ -1,0 +1,281 @@
+---
+title: Building simple multilevel models with {brms}
+author: Shane A. Scaggs
+date: '2021-12-10'
+slug: building-simple-multilevel-models-with-brms
+categories:
+  - Statistics
+tags:
+  - Bayes
+  - Modeling
+  - Data Analysis
+---
+
+Multilevel models are a kind of statistical model that estimate parameters at more than one level. They are very useful kind of model because they are suited to the hierarchical and nested organization of the world around us.  In this post, I will demonstrate how to build, describe, and compare multilevel models using tools from `brms`. 
+
+```{r, message=F, warning=FALSE}
+options(mc.cores = parallel::detectCores(), scipen = 0)
+#install.packages('rstan')
+#install.packages('brms')
+library(brms)
+library(tidybayes)
+library(tidyverse)
+library(modelr)
+```
+
+```{r, echo=F}
+sas_nogrid <- sas_nogrid <- theme(panel.background = element_rect(fill = 'white', colour = 'black'), 
+                                  panel.border = element_rect(color='black', size=1.2, fill = '#00000000'), 
+                                  panel.grid = element_blank(), 
+                                  text = element_text(family = 'mono', size = 14, color = 'black'),
+                                  axis.ticks.length = unit(0.15, 'inch'), 
+                                  axis.ticks = element_line(size=0.7), 
+                                  strip.background = element_rect(fill = 'black', color = 'black'), 
+                                  strip.text = element_text(color='white', face = 'bold'))
+
+```
+
+
+
+For this demonstration, let's model the `palmerpenguins` dataset made available on github by [Allison Horst](https://allisonhorst.github.io/palmerpenguins/articles/intro.html#exploring-factors-1). These data contain morphometrics for three species of penguins -- Chinstrap, Gentoo, and Adelie -- and the names of the islands they inhabit in Antarctica. 
+
+```{r, message=F, warning=F}
+#remotes::install_github('allisonhorst/palmerpenguins')
+library(palmerpenguins)
+data('penguins')
+d <- penguins
+head(d)
+```
+
+## Start simple
+
+Let's model penguin body mass (`body_mass_g`). A simple starting model would be to estimate the central tendency and variation in body masses across all penguins. We can do this by estimating the parameters mu ($\mu$) and sigma ($\sigma$) with a Gaussian family. 
+
+For now, we will use the default `brms` priors.  You can view them by calling the model formula, data, and family:
+
+```{r, warning=F}
+get_prior(body_mass_g ~ 1, 
+          family = gaussian(), data = d)
+```
+
+The model formula is truly as simple as it can be: `body_mass_g ~ 1`. We estimate a single fixed intercept.   
+
+```{r, warning=F, message=F, eval=F}
+mod0 <- brm(family = gaussian(), data = d,
+            body_mass_g ~ 1)
+```
+
+```{r, warning=F, message=F,echo=F}
+mod0 <- brm(data = d, family = gaussian(),
+            body_mass_g ~ 1, 
+            file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model0-Intercept",
+            file_refit = 'on_change')
+```
+
+We can examine the posterior estimates using `posterior_summary()`, which returns all fixed and random effect estimate by a `<brmsfit>` object. According to this model, the mean body mass (g) of all the Penguins is `4200.43`, surrounded by `44.09` grams of error. This value is comparable to the value computed using `base` `R` (mean = ``r round(mean(d$body_mass_g, na.rm=T), digits=2)``). This model also estimates a `sigma` value of `802.90`, which is comparable to the standard deviation (sd  = ``r round(sd(d$body_mass_g, na.rm=T),digits=2)``)
+
+```{r}
+posterior_summary(mod0)
+```
+
+If we generate `4000` draws from this model, and graph them, the distribution looks something like this:
+
+```{r, echo=F, fig.width=4, fig.height=3, fig.cap='Posterior distribution of body mass (g).', fig.align='left'}
+mod0 %>% spread_draws(b_Intercept) %>%
+  ggplot(aes(b_Intercept)) + geom_density(fill='#3300ff33', color='#3300ff', lwd=1.2) + sas_nogrid + geom_vline(xintercept = 4200.43, lty=2)
+```
+
+
+## Species variation, fixed and random
+
+A sensible biologist might point out that body mass probably varies across each species of penguin. We can assess this by adding a **fixed effect** of species to our model that will estimate the body mass for each species. It will not, however, help us understand how body mass varies *within* each species. To do that, we need estimate **random intercepts** for each species group. We'll fit both models to illustrate the difference. 
+
+For the fixed effect model, we add the `species` factor to our model formula: 
+
+> `body_mass_g ~ 1 + species`
+
+to estimate a fixed intercept for each of the species groups in the dataset.   
+
+```{r, warning=F, message=F, eval=F}
+mod1a <- brm(data = d, family = gaussian(),
+             body_mass_g ~ 1 + species)
+```
+
+```{r, warning=F, message=F,echo=F}
+mod1a <- brm(data = d, family = gaussian(),
+             body_mass_g ~ 1 + species, 
+             file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model1a-FixedSpecies",
+             file_refit = 'on_change')
+```
+
+We can examine the estimates by calling the model object inside the `fixef()` function. 
+```{r}
+fixef(mod1a)
+```
+
+Here we see that the body mass of `Adelie` --  the reference category for `Intercept` -- and `Chinstrap` differ by just over `30` grams, while the mean for `Gentoo` is more than `1000` grams larger. Just how much these body mass measurements overlap is easier to see if we graph the posterior. 
+
+```{r, echo=F, fig.width=5, fig.height=3, fig.cap='Posterior distribution of body mass (g) for each penguin species.', fig.align='left'}
+mod1a %>% 
+  spread_draws(b_Intercept, b_speciesChinstrap, b_speciesGentoo) %>%
+  select(b_Intercept, b_speciesChinstrap, b_speciesGentoo) %>%
+  mutate(Adelie = b_Intercept, 
+         Chinstrap = b_Intercept + b_speciesChinstrap, 
+         Gentoo = b_Intercept + b_speciesGentoo) %>%
+  select(Adelie, Chinstrap, Gentoo) %>%
+  gather(key = species, value = body_mass) %>%
+  ggplot(aes(body_mass)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+  sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
+  labs(x='body_mass_g')
+```
+
+To estimate random intercepts for each species, rather than fixed intercepts, we use the following model formula:
+
+> `body_mass_g ~(1|species)`
+
+```{r, warning=F, message=F, eval=F}
+mod1b <- brm(data = d, family = gaussian(),
+             body_mass_g ~ (1|species))
+```
+
+```{r, warning=F, message=F,echo=F}
+mod1b <- brm(data = d, family = gaussian(),
+             body_mass_g ~ (1|species), 
+             file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model1b-RandomSpecies",
+             file_refit = 'on_change')
+```
+
+This model estimates a "global" fixed intercept: 
+
+```{r}
+fixef(mod1b)
+```
+
+and then separate random intercepts for each species, reported as differences from the global intercept:
+
+```{r}
+ranef(mod1b)
+```
+
+Ultimately, this model will produce posterior distributions that look very similar to the fixed effect model: 
+
+```{r, echo=F, fig.width=5, fig.height=3, fig.cap='Posterior distribution of body mass (g) based on random intercepts for each penguin species.', fig.align='left'}
+mod1b %>% 
+  spread_draws(b_Intercept, r_species[species,]) %>%
+  mutate(body_mass_g = b_Intercept + r_species) %>%
+  ggplot(aes(body_mass_g)) + geom_density(aes(fill=species, color=species), lwd=1.2, alpha=0.4) + 
+  sas_nogrid + scico::scale_fill_scico_d(palette = 'hawaii', end=0.8) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) 
+```
+
+However, there is a key difference between the fixed and random effects models. The random effects model has a much greater amount of uncertainty when compared to the fixed effects. This can be seen in the following dotplot, which shows the coefficient estimates for each model and the error around these estimates.
+
+```{r, warning=F, message=F, echo=F, fig.width=5.5, fig.height=3, fig.cap='Intercept and beta coefficients fixed and random effects models. Lines indicate estimated error.', fig.align='left'}
+
+fe <- as.data.frame(fixef(mod1a)[,1:2])
+fe$Model <- 'fixed'
+rownames(fe) <- c('Adelie\n(Intercept)','Chinstrap','Gentoo')
+
+re <- as.data.frame((ranef(mod1b)$species)[,1:2,])
+re$Model <- 'random'
+re[1,1] <- -436.8614 + 4137.384
+re[1,2] <- mean(c(475.0701, 474.9684))
+rownames(re) <- c('Adelie\n(Intercept)','Chinstrap','Gentoo')
+df <- rbind(fe,re)
+df$species <- rownames(df)
+
+df %>% 
+  mutate(species = str_remove(species, '1')) %>%
+  ggplot(aes(Estimate, species)) + 
+  geom_point(aes(color=Model), size=2, pch=21, position = position_dodge(width = 0.5)) + sas_nogrid + 
+  geom_errorbar(aes(xmin = Estimate - Est.Error, 
+                    xmax = Estimate + Est.Error,
+                    color = Model), 
+                position = position_dodge(width = 0.5),
+                size = 0.7, width = 0) + 
+  scico::scale_color_scico_d(palette = 'lajolla', begin = 0.6) + 
+  geom_vline(xintercept = 0, lty=2) + labs(y='')
+  
+  
+```
+
+There is a tendency to view high uncertainty as a marker of defeat. This should not be the case. Having a better estimation of model uncertainty (combined with good theory) is a necessary condition for valid causal inference.  
+
+# Random slopes 
+
+Different penguin species have different bill lengths. It certainly seems possible that these differences might predict body mass. We can examine this descriptively. 
+
+```{r, echo=F, warning=F, message=F, fig.align='left', fig.height=3.1, fig.width=5.2, fig.cap='The relationship between bill length(mm) and body mass (g) for each penguin species.'}
+d %>% ggplot(aes(bill_length_mm, body_mass_g)) + sas_nogrid + 
+  geom_point(aes(color=species), pch=21) + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
+  geom_smooth(aes(color=species), method = 'lm', alpha=0) + 
+  geom_rug(aes(color=species))
+```
+
+If we use a line to describe these relatioships, we can see that some slopes are steeper than others. Chinstrap penguins, for example, seem to have more variation in the bill length, body mass relationship, especially compared to Gentoo, and then gives them a dampened slope.
+
+We build on a random intercepts model by adding random slopes to the `|species` portion of the `brms` syntax: 
+
+> `body_mass_g ~ (1 + bill_length_mm|species)`
+
+Before we fit the model, we need to rescale the bill length variable. Although we are not setting any priors in this example, rescaling will makes it much easier to set sensible priors. 
+
+```{r}
+d$bill_length_s <- scale(d$bill_length_mm)
+```
+
+Now let's fit the model. 
+
+```{r, warning=F, message=F, eval=F}
+mod2 <- brm(data = d, family = gaussian(),
+             body_mass_g ~ (1+bill_length_s|species))
+```
+
+```{r, warning=F, message=F,echo=F}
+mod2 <- brm(data = d, family = gaussian(),
+             body_mass_g ~ (1+bill_length_s|species), 
+             file = "~/Shane's Projects/folio/content/bayes/2021-12-10-building-multilevel-models-with-brms/models/Model1b-RandomSlopes",
+             file_refit = 'on_change')
+```
+When we examine the random effects, we see estimates of how much each species differs from the global average (`Intercept`) and an estimate of the change in body mass for each unit change in bill length (`slope`). 
+
+```{r}
+ranef(mod2)
+```
+
+These relationships are much easier to understand if we make predictions. To do this using tidybayes, first call the data frame `d` and `group_by` each factor. In this case we only have `species`. Then, using the `modelr` package, we create a `data_grid`. These are the values of bill length that we want to make predictions for. Remember that bill length has been rescales, where a value of `0` is equal to the mean. 
+
+```{r}
+d %>% group_by(species) %>%
+  data_grid(bill_length_s = seq(-3,3, length.out=40)) %>%
+  head()
+```
+We place the model object inside `add_epred_draws` to make our predictions. This returns a tidy data frame where the column `.epred` contains the predictions for each value of bill length. 
+
+```{r}
+d %>% group_by(species) %>%
+  data_grid(bill_length_s = seq(-3,3, length.out=40)) %>%
+  add_epred_draws(mod2, ndraws = 100) %>%
+  head()
+```
+We can use that tidy data frame to graph lines, or intervals, just as we normally would using `ggplot.` Let's recreate Figure 5.
+
+```{r, echo=F, warning=F, message=F, fig.align='left', fig.height=3.1, fig.width=5.2, fig.cap='Predicted relationships between bill length (mm) and body mass (g) for each species of penguin, with pbserved points overlayed.'}
+d %>% group_by(species) %>%
+  data_grid(bill_length_s = seq(-3,3, length.out=40)) %>%
+  add_epred_draws(mod2, ndraws = 100) %>%
+  ggplot(aes(bill_length_s, .epred)) + 
+  geom_line(aes(color=species, group=paste0(species,.draw)), alpha=0.1 ) + 
+  sas_nogrid + scico::scale_color_scico_d(palette = 'hawaii', end=0.8) + 
+  geom_point(data = d, aes(x=bill_length_s, y=body_mass_g, color=species), pch=19, alpha=0.2) + 
+  geom_rug(data = d, aes(x=bill_length_s, y=body_mass_g, color=species))
+```
+
+
+## Endnotes 
+
+1. As with all MCMC models, your results may differ slightly than mine. I did not bother to set the `seed =` parameter in `brm`, so you'll not be able to reproduce each decimal exactly. 
+
+2. I've hidden many of the plotting details for brevity. I can elaborate more on these in future posts. For now, check out the work of [Solomon Kurz](https://solomonkurz.netlify.app/) to learn more about using `tidyverse` and `tidybayes` to visualize Bayesian models. 
+
+
+

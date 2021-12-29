@@ -1,0 +1,100 @@
+---
+title: 'Foundational concepts in network science'
+author: Shane A. Scaggs
+date: '2021-12-12'
+slug: unit-1-foundational-network-concepts
+categories:
+  - Networks
+tags:
+  - social network analysis
+  - teaching
+  - concepts
+  - theory
+  - instruction
+bibliography: u1.bib
+csl: current-biology.csl
+draft: yes
+---
+
+```{r, message=F, warning=F, echo=F}
+library(plotly)
+library(tidyverse)
+sas_nogrid <- sas_nogrid <- theme(panel.background = element_rect(fill = 'white', colour = 'black'), 
+                                  panel.border = element_rect(color='black', size=1.2, fill = '#00000000'), 
+                                  panel.grid = element_blank(), 
+                                  text = element_text(family = 'mono', size = 14, color = 'black'),
+                                  axis.ticks.length = unit(0.15, 'inch'), 
+                                  axis.ticks = element_line(size=0.7), 
+                                  strip.background = element_rect(fill = 'black', color = 'black'), 
+                                  strip.text = element_text(color='white', face = 'bold'))
+
+```
+
+Since the first published use of the term "network analysis" in 1930 by W.H. Martin, published research articles using this phrase have grown in number exponentially. 
+
+```{r, echo=F, fig.cap='Number of research articles on Web of Science containing the phrase "network analysis."'}
+netcite <- read.csv("~/Shane's Projects/folio/content/networks/2021-12-12-unit-1-network-theory-and-science/files/network citations.csv")
+
+colnames(netcite) <- c('Year','Citations')
+d <- netcite[-c(1,75),]
+d$Year <- as.numeric(d$Year)
+d$First <- ''
+
+d[ d$Year == 1930, 3] <- 'W.H. Martin. 1930.\nTransmitted frequency range for message circuits.\nBell System Technical Journal.'
+
+plot <- d %>% ggplot(aes(Year, Citations)) +
+  geom_line(color='#3300ff66') + 
+  geom_point(color='#3300ff') + 
+  sas_nogrid + 
+  geom_area(fill='#3300ff33', alpha=0.2) + 
+  scale_x_continuous(breaks = seq(1930,2020,30)) + 
+  scale_y_continuous(breaks = seq(0,15000,3000)) + labs(y=NULL)
+ggplotly(plot) 
+```
+
+ The incredible growth and spread of network analysis is due to it's flexibility both a method of analysis *and* as a metaphor for the phenomena that researchers study. Network analysis is mathematically rooted in graph theory [@barnes1983graph], but it has been used to study echo chambers in environmental policy [@jasny2015empirical]; the social lives of microbiological colonies [@watrous2012mass]; the stability of mixed subsistence-cash economies in Alaska [@baggio2016multiplex]; the architecture of plant-pollinator mutualisms [@suweis2013emergence]; the size of the internet [@albert1999diameter]; and language structures [cite]. These examples hardly scratch the surface. 
+ 
+So, how can we define what a **network** is? And what makes it such a widely applicable concept? 
+
+## What is a network? 
+
+In abstract terms, a network is a set of **vertices** that are connected by **edges** to form a graph. Using this definition, anyone who took an introductory geometry class in primary school has encountered a network. However, when we think about what a network is, and try to picture one, we probably see something that appears more human, more social or ecological, or perhaps something more technological. 
+
+Substantively, a network is a set of actors or agents, which we represent as vertices, that are connected to each other by one or more relationships, which we represent as edges. In this sense, a network is an analogy for the web of interactions that take place in the world. A network object is therefore a way to reduce and codify the **relationality** that we observe and experience. 
+
+```{r, echo=FALSE, message=F, warning=F, fig.height=3, fig.width=6, fig.cap='A) An undirected network with three vertices and three edges. B) An undirected network with 27 vertices and 38 edges.'}
+library(tidygraph)
+library(ggraph)
+library(statnet)
+library(patchwork)
+
+net3 <- network(t(combn(letters[1:3], 2)))
+N <- 27
+net27 <- network(N, directed = F, density = 0)
+sim27 <- simulate(net27 ~ edges + kstar(3), coef = c(1,-1))
+
+g3 <- as_tbl_graph(net3) %>%
+  ggraph() + 
+  geom_edge_link0(color='#3300ff') + 
+  geom_node_point(color='#3300ff', fill='white', pch=21, size=5) + 
+  theme_graph()
+
+g27 <- as_tbl_graph(sim27) %>%
+  ggraph('kk') + 
+  geom_edge_link0(color='#3300ff') + 
+  geom_node_point(color='#3300ff', fill='white', pch=21, size=3) + 
+  theme_graph()
+
+
+(g3 + g27) + plot_annotation(tag_levels = 'A')
+```
+
+Sticking with the abstract definitions for a moment, networks can be classified based on properties of the edges and vertices used to construct them. For example, a network with edges that can go in both directions -- such as two people sending each other letters --  is called a **directed** network. A network with edges that lack directionality is **undirected**. 
+
+Many of the most common networks you will encounter describe connections between a single type of agent. These are sometimes called **one-mode** or **unipartite** networks. Another common network is a **bipartite** or **two-mode** networks. These networks contain two types of vertices -- e.g., plants and pollinators -- and are only used to represent connections *between* the two types. Bipartite networks differ from **multiplex** networks, which can represent connections within and between multiple types of vertices. 
+
+A particular type of vertex may have many kinds of relationships that connect them. For example, we can imagine how two people may share many different kinds of relationships. For a set of vertices, we can think of each distinct relationship as a **layer** of edges. When we layer these relationships together, what emerges is a **multilayer** network. These kinds of networks can be very complex [@boccaletti2014structure], but they allow us to describe relationships that are correlated and uncorrelated. To put this another way, multilayer networks reveal the ways that social interactions compliment one another, the **redundancies** across relationships [@atkisson2020redundant], and which interactions can possibly be substistuted for one another.  
+
+By now it should be clear that using relatively simple pieces, we can build our way up to very complicated geometric objects that can be used to describe and understand many different kinds of relational processes and systems. This is part of what makes network analysis so powerful -- the ability to generate complex systems of interactions from very simple shapes and rules.  
+
+# References

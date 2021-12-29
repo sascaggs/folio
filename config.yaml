@@ -17,11 +17,11 @@ menu:
     - name: About
       url: /about/
       weight: 1
-    - name: Networks
-      url: /networks/
+    - name: Data Science
+      url: /Data Science/
       weight: 3
-    - name: Bayes
-      url: /bayes/
+    - name: Blog
+      url: /post/
       weight: 4
     - name: CV
       url: /cv/
