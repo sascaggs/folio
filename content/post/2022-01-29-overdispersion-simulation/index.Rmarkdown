@@ -1,0 +1,97 @@
+---
+title: Overdispersion simulation
+author: Shane A. Scaggs
+date: '2022-01-29'
+slug: overdispersion-simulation
+categories:
+  - Statistics
+tags:
+  - Bayes
+  - Modeling
+  - simulation
+draft: yes 
+---
+
+# Preamble 
+
+```{r, message=F, warning=F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(modelr)
+```
+
+```{r, echo=F}
+sas_theme <- theme(
+    panel.background = element_rect(fill='white', color = 'black'),
+    panel.grid = element_line(color='gray85', linetype = 3), 
+    text = element_text(family = 'mono'), 
+    strip.background = element_rect(fill = '#3c540033'), 
+    strip.text = element_text(color = '#3c5400')
+)
+```
+
+
+# Introduction
+
+It is no secret data generated from trail camera photographs tends to be *overdispersed*. Most of the time no photographs are taken, and even when they are, many photographs do not contain animals. This *zero-inflation* must be overcome before we can make inferences about the factors that predict the presence of wildlife. 
+
+This is a problem I encounter in my research because I want to estimate the abundance of game species across seral stages in a neotropical rainforest. These seral stages, often called *fallows*, are created by Q'eqchi' swidden cultivation techniques that briefly disturb vegetation communities and facilitate forest succession. To estimate game abundance across these fallows, I am setting 25 cameras in a grid. One axis of the grid is a disturbance gradient that extends from highly disturbed areas near a village to infrequently cultivated regions near a national park. The other axis of the grid extends out from a river. 
+
+The main question is: *how do human disturbances and the fallows created by swidden cultivation influence wildlife abundance?* Before I answer this empirically, I want to simulate some hypothetical answers based on three models: 
+
+1. **Neutral model** -- Fallow classes have no influence on game abundance. Observations appear random.  
+2. **Climax model** -- As forests regrow toward climax forest conditions, game abundance linearly increases. 
+3. **Intermediate model** -- Intermediate stages of regrowth offer novel foraging and breeding habitat, leading to equal or greater game abundance relative to climax conditions. 
+
+# Coding fallow classes 
+
+Accurately categorizing fallow stages is a topic we could spend decades on. We don't have that kind of time, so how should we code them for a simulation? 
+
+One way to do it would be to generate a uniform distribution ranging from `0`, under cultivation, to `climax`. This would assume an equal distribution of forest ages to what parameter we choose for climax. 
+
+```{r, echo=F}
+set.seed(25)
+climax <- 200
+tibble(N_days = 1:2e3,
+       fallows = runif(N_days, 0, climax)) %>%
+    ggplot() + sas_theme + 
+    geom_density(aes(fallows), 
+                 color='#3300ff', fill='#3300ff33', lwd=1.2) + 
+    labs(x='forest age',)
+```
+
+This approach asserts no strong assumptions about which fallow classes are the most common. Alternatively, we can move the probability density around to create younger or older forests. 
+
+```{r, echo=F}
+climax <- 200
+tibble(N_days = 1:2e3,
+       fallows = runif(N_days, 0, climax),
+       young = rlnorm(N_days, 2.7, 0.7)*2, 
+       ) %>%
+    gather(key=key, value=value, -N_days) %>%
+    ggplot() + sas_theme + 
+    geom_density(aes(value), 
+                 color='#3300ff', fill='#3300ff33', lwd=1.2) +
+    facet_wrap(~key) + 
+    labs(x='forest age')
+```
+
+
+# The Neutral Model 
+
+Suppose we simulate game abundance over `N_days`. The number of game observed `A` depends on both the probability of detection, `prob_detect`, and the characteristics of the fallows. In the neutral model, we will keep the *effect* of fallows essentially random. 
+
+```{r}
+set.seed(25)
+N_days <- 2e3 
+prob_detect <- 0.1
+```
+    
+    
+    
+    
+    
+    
+    
+    

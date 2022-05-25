@@ -33,7 +33,7 @@ edu %>% kbl(align = 'l') %>% column_spec(1, width = '0.5in')
 ### Publications
 
 ```{r,echo=F}
-pubs <- read.csv(file = "~/Shane's Projects/folio/static/csv/pubs.csv")
+pubs <- openxlsx::read.xlsx("~/Shane's Projects/folio/static/csv/pubs.xlsx", sheet=1)
 colnames(pubs) <- c('Year','Citation','DOI','Type')
 
 pubs$Citation <- paste(pubs$Citation, pubs$DOI, sep = ' ')
@@ -42,6 +42,24 @@ pubs[,1:2] %>% kbl(align = 'l') %>%
     column_spec(1, width = '0.5in')
 
 ```
+
+#### Contributions
+
+```{r, echo=F, message=F, warning=F, fig.width=8, fig.height=4, fig.cap="Contribution matrix.", fig.align='center'}
+cont <- openxlsx::read.xlsx("~/Shane's Projects/folio/static/csv/pubs.xlsx", sheet=2)
+
+cont %>% 
+  gather(key=key, value=value, -Contribution) %>%
+  mutate(value = ifelse(is.na(value)==T, 'No', 'Yes')) %>%
+  ggplot() + geom_tile(aes(x=key, y=Contribution, fill=factor(value)), color='black',size=1) + 
+  scale_fill_manual(values = c('white','magenta')) +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 40, hjust = 1), 
+        axis.text = element_text(color='black'),
+        text = element_text(size=14, color='black')) + 
+  labs(x=NULL, y=NULL, fill='Contributed?') 
+```
+
 
 ### Funding Support
 
