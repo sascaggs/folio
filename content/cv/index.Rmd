@@ -19,6 +19,8 @@ Department of Anthropology<br>
 The Ohio State University<br>
 scaggs.32@osu.edu</p>
 
+Download a copy of my full CV [here](static/files/CV.2.pdf)
+
 ### Research Interests 
 
 Human Subsistence $\times$ Cooperation and Interspecies Coexistence $\times$ Dietary Diversity $\times$ Food Webs $\times$ Network Science $\times$ Complex Social-Ecological Systems $\times$ Community and Wildlife Ecology  
