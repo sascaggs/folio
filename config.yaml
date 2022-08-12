@@ -12,6 +12,7 @@ ignoreFiles:
   - \.utf8\.md$
 permalinks:
   post: /:year/:month/:day/:slug/
+  Data Science: /:year/:month/:day/:slug/
 menu:
   main:
     - name: About

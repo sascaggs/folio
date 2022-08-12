@@ -1,0 +1,225 @@
+---
+title: Basic properties of food webs
+author: Shane A. Scaggs
+date: '2022-07-28'
+slug: exploring-synthetic-food-webs
+categories:
+  - Networks
+tags:
+  - simulation
+  - theory
+  - food webs 
+  - ecology
+draft: true 
+bibliography: fw.bib
+csl: pnas.csl
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="intro" class="section level1">
+<h1>Intro</h1>
+<p>In this post, I want to generate synthetic food webs using tools from network science. My goal is to take properties of food webs that have been found and described in published studies, and use these to simulate food webs. The purpose of this exercise is to understand how subtle changes to key parameters can lead to alternative arrangements of trophic levels and feeding relationships.</p>
+</div>
+<div id="background" class="section level1">
+<h1>Background</h1>
+<p>There are many ways to conceptualize how ecological communities are organized. Food webs are a way to represent ecological communities in terms of their feeding links <span class="citation">(<a href="#ref-petchey2008size" role="doc-biblioref">1</a>)</span>. Two organisms are connected in a food web if at least one of them feeds on the other. A food chain is a path of consumption through a food web where species <span class="math inline">\(i\)</span> eats species <span class="math inline">\(j\)</span> and species <span class="math inline">\(j\)</span> eats species <span class="math inline">\(k\)</span>, and so on.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:motifs"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/motifs-1.png" alt="Examples of food web network motifs adapted from Baiser et al. (2016). Arrow heads indicate direction of consumption (e.g, consumer $\rightarrow$ resource)." width="672" />
+<p class="caption">
+Figure 1: Examples of food web network motifs adapted from Baiser et al. (2016). Arrow heads indicate direction of consumption (e.g, consumer <span class="math inline">\(\rightarrow\)</span> resource).
+</p>
+</div>
+<p>Network graphs provide an intuitive computational method for describing and analyzing food webs <span class="citation">(<a href="#ref-baiser2016motifs" role="doc-biblioref">2</a>)</span>. A network graph consists of a set of vertices connected by edges. Vertices and edges can be used to represent many different interconnected entities. Within a food web, they symbolize individual species and the feeding relationships between them.</p>
+<p>Trophic level is a core concept used to discuss the structure of food webs. The trophic level of a species <span class="math inline">\(i\)</span> is jointly determined by the other species that <span class="math inline">\(i\)</span> feeds on as well as those species that feed on <span class="math inline">\(i\)</span>. Using tools from network science, we can descriobe which trophic level a species is at by analyzing patterns of incoming and outgoing feeding links. A top predator, for example, is characterized by an absence of incoming links, meaning that there are no species in the food web that consume the predator. A basal species is characterized by an absence of outgoing links, meaning that these species are autotrophs.</p>
+<p>In their supplementary information, Petchey et al. <span class="citation">(<a href="#ref-petchey2008size" role="doc-biblioref">1</a>)</span> describe 12 properties of food web structure. The first four of these properties describe how a food web is composed specific trophic levels and feeding strategies:</p>
+<ol style="list-style-type: decimal">
+<li>Proportion of basal species; autotrophs that are consumed by other species.</li>
+<li>Proportion of intermediate species who consume and are consumed by other species.</li>
+<li>Proportion of top species who only consume other species.</li>
+<li>Proportion of herbivores; species who only consume basal species.</li>
+</ol>
+<p>Setting aside generalism and specialism, we can use these four principles to derive the simplest possible food web that encompasses both all trophic positions (top, intermediate, basal) and diets (carnivore, herbivore, omnivore).</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-2"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" alt="The simplest possible food web that still contains all trophic positions and diet strategies. Nodes are colored according to their trophic position (top,intermediate,basal) and node shape represents diet strategy (carnivore, herbivore, omnivore, and autotroph)." width="672" />
+<p class="caption">
+Figure 2: The simplest possible food web that still contains all trophic positions and diet strategies. Nodes are colored according to their trophic position (top,intermediate,basal) and node shape represents diet strategy (carnivore, herbivore, omnivore, and autotroph).
+</p>
+</div>
+<p>This simple food web structure has some specific qualities. For example, if we exclude “Top herbivore,” the remain network contains three identical triad forms: the transitive triad.</p>
+<p>If we look at the relationship between network in-degree and out-degree, there is a clear negative correlation (<span class="math inline">\(\rho\)</span> = -0.546). If we calculate in-degree and out-degree and then rescale the values and compare their distributions, we see that the density curves mirror each other to some extent.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-4"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" alt="Comparison of the distributions of in-degree and out-degree from the reduced food web. Axis labels have been removed because the degree centrality values have been centered and rescaled for direct comparison." width="384" />
+<p class="caption">
+Figure 3: Comparison of the distributions of in-degree and out-degree from the reduced food web. Axis labels have been removed because the degree centrality values have been centered and rescaled for direct comparison.
+</p>
+</div>
+<p>There is, however, something obviously wrong with this idealized food web. For simplicity, I have only used just a single basal species. This simplification flies in the face of observed food webs which tend to have very high proportions of basal species.</p>
+</div>
+<div id="simulating-a-random-food-web" class="section level1">
+<h1>Simulating a random food web</h1>
+<p>To truly understand how food webs <em>might</em> be arranged, we need simulations that can we can play with. One very simple starting point would be to simulate a random network where a portion of nodes – basal species – have no outgoing connections. We can do this by 1) creating <code>N</code> nodes, 2) setting the proportion of basal species, 3) generating a grid that represents every possible pair of species, and 4) assigning which species are and are not basal species.</p>
+<pre class="r"><code>N = 25
+p_basal = 0.6
+e = expand.grid(1:N, 1:N)
+e$basal = e$Var1 &lt;= (N * p_basal)</code></pre>
+<p>The grid we’ve created is essentially an edgelist and edgelists encode direction – the first column is “from” and the second column is “to.” Because basal species are only the target of edges, we can code every basal species in the first column with a 0, since all of these edges are not eligible.</p>
+<pre class="r"><code>e$ij = NA
+e[ e$basal == T, &#39;ij&#39;] = 0</code></pre>
+<p>Every other entry in the <code>ij</code> column is a possible food web connection. We will simulate the presence or absence of these using an Bernoulli trial – a coinflip. This is precisely how Erdos and Renyi random graphs are constructed.</p>
+<pre class="r"><code>set.seed(777)
+
+# Find N basal and N consumers
+N_basal = length(e[ e$basal == T, &#39;ij&#39;])
+N_consumers = nrow(e) - N_basal
+
+# Bernoulii trial
+e[ e$basal == F, &#39;ij&#39;] = rbinom( n=N_consumers, size=1, prob=0.5 )</code></pre>
+<p>Finally we create an igraph object using <code>graph.data.frame</code> using only those edges that were assigned a 1 in the trial.</p>
+<pre class="r"><code>g = graph.data.frame(e[ e$ij == 1, ], vertices = data.frame(name=1:N))
+g</code></pre>
+<pre><code>## IGRAPH d0ba61e DN-- 25 120 -- 
+## + attr: name (v/c), basal (e/l), ij (e/n)
+## + edges from d0ba61e (vertex names):
+##  [1] 16-&gt;1  19-&gt;1  20-&gt;1  24-&gt;1  16-&gt;2  17-&gt;2  18-&gt;2  19-&gt;2  20-&gt;2  23-&gt;2 
+## [11] 17-&gt;3  18-&gt;3  21-&gt;3  23-&gt;3  24-&gt;3  25-&gt;3  16-&gt;4  17-&gt;4  18-&gt;4  22-&gt;4 
+## [21] 24-&gt;4  25-&gt;4  18-&gt;5  21-&gt;5  22-&gt;5  23-&gt;5  24-&gt;5  16-&gt;6  23-&gt;6  16-&gt;7 
+## [31] 18-&gt;7  20-&gt;7  24-&gt;7  25-&gt;7  17-&gt;8  18-&gt;8  21-&gt;8  23-&gt;8  24-&gt;8  24-&gt;9 
+## [41] 25-&gt;9  16-&gt;10 19-&gt;10 21-&gt;10 24-&gt;10 25-&gt;10 16-&gt;11 17-&gt;11 20-&gt;11 21-&gt;11
+## [51] 24-&gt;11 25-&gt;11 16-&gt;12 17-&gt;12 20-&gt;12 23-&gt;12 24-&gt;12 25-&gt;12 18-&gt;13 21-&gt;13
+## [61] 23-&gt;13 24-&gt;13 25-&gt;13 17-&gt;14 19-&gt;14 20-&gt;14 16-&gt;15 17-&gt;15 22-&gt;15 23-&gt;15
+## [71] 16-&gt;16 19-&gt;16 20-&gt;16 24-&gt;16 16-&gt;17 18-&gt;17 19-&gt;17 20-&gt;17 16-&gt;18 17-&gt;18
+## + ... omitted several edges</code></pre>
+<p>For visualization purpose, I will tag the basal species in the igraph object using the same indices as above and then color them when I plot the results.</p>
+<pre class="r"><code>V(g)$basal = ifelse(as.numeric(V(g)$name) &lt;= N*p_basal, &#39;basal&#39;,&#39;consumer&#39;)</code></pre>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-10"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" alt="A random food web with 25 nodes and 74 edges." width="672" />
+<p class="caption">
+Figure 4: A random food web with 25 nodes and 74 edges.
+</p>
+</div>
+<p>A qualitative inspection of this food web shows that there is no obvious modularity or nestedness, except for that which we have imposed on the graph by prohibited edges that start at basal nodes. Notice that there are also loops that extended from four of the consumer species. These represent cannibalism in food webs and they arise because <code>expand.grid</code> generates every conceivable pair of index values, including an index paired with itself (e.g., 1, 1, TRUE, 0). We could inspect this food web more quantitatively by plotting the degree distributions, examining the path length, and by scanning the network for subgraphs indicate of the trophic positions and motifs shown earlier in this post.</p>
+<div id="generality-and-vulnerability" class="section level2">
+<h2>Generality and Vulnerability</h2>
+<p>Degree centralities are used in food webs to quantify <em>generality</em> and <em>vulnerability</em>. Species with high out-degree are considered more general consumers; species with high in-degree are considered more vulnerable to predation. Often these measures are summarized using <code>sd</code> in order to assess whether the food web is characterized by a lot of redundancies and competition. However, there is one catch: since basal species cannot predate and would thus have 0 out-degree, they are excluded from the calculation of sd generality.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-11"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" alt="Distribution of in-degree (blue) and out-degree (red) as indicators of vulnerability and generality." width="624" />
+<p class="caption">
+Figure 5: Distribution of in-degree (blue) and out-degree (red) as indicators of vulnerability and generality.
+</p>
+</div>
+<p>Although these distributions are obviously different from the idealized food web, they are similar in the sense that out-degree varies more than in-degree – it is a flatter curve.</p>
+</div>
+<div id="path-length" class="section level2">
+<h2>Path length</h2>
+<p>A path can be traced between every two nodes. Nodes that are connect have a 1-path. Nodes that must travel through and intermediary node have a 2-path. You get the idea. Average Path Length (APL) is used to assess how tightly connected a food web is by taking the average of the shortest path between every pair of nodes. An APL near 1 suggests that most nodes are connected to each other directly. You can learn more about this feature of networks and their density by reading <a href="https://shanescaggs.netlify.app/data-science/size-and-structure/">this post</a>.</p>
+<p>Finding the APL is easy with <code>igraph</code> since the authors provide a function for it.</p>
+<pre class="r"><code>average.path.length(g)</code></pre>
+<pre><code>## [1] 1.5625</code></pre>
+</div>
+<div id="triads-motifs" class="section level2">
+<h2>Triads, Motifs</h2>
+<p>A common way to describe a network is to do a census of specific substructures within it. A common census is the <em>triad census</em>. Recall the motifs that were shown in the first figure. These are different triad formations that have had specific food web meanings attached to them. There are 16 distinct triads that can be forms based on the pattern of incoming and outgoing edges among three nodes. The figure below shows these possibilities.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-13"></span>
+<img src="triads.PNG" alt="16 possible triads. Each triad has a 3-digit code associated with it that indicates, respectively, how many mutual, asymmetric, and nonexisent edges it has. Triad 9, for instance, has 0 mutual, 3 asymmetric, and 0 nonexistent. The T stands for *transitive* while the C stands for *cyclical*." width="50%" />
+<p class="caption">
+Figure 6: 16 possible triads. Each triad has a 3-digit code associated with it that indicates, respectively, how many mutual, asymmetric, and nonexisent edges it has. Triad 9, for instance, has 0 mutual, 3 asymmetric, and 0 nonexistent. The T stands for <em>transitive</em> while the C stands for <em>cyclical</em>.
+</p>
+</div>
+<p>021U, 021D, and 021C are three of the four motifs shown in figure 1. The fourth – omnivory – is 030T.</p>
+<p>What will we get if we census our simulated food web? We can expect that the triads that can only arise between all consumers may be unlike. This includes any triad that contains 2 or 3 mutual ties (201,210,300). It also includes 030C and 120C, wich are both cyclical and cycles can only arise among consumers. 111D and 111U are similar, although 111U seems more likely since it can arise when two consumer eat each other (a mutual) and one of these consumers either eats another consumer or a basal species. 111D can only occur if a third consumer is present.</p>
+<p>Let’s take a look. I’ll tag every triad that can only occur if every node is a consumer.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-14"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" alt="Count of triads observed in the random food web." width="576" />
+<p class="caption">
+Figure 7: Count of triads observed in the random food web.
+</p>
+</div>
+<p>As I suspected, all of the triads that require all three nodes to be consumers have the lowest counts in the simulated food web. But they are all represented at least once (<span class="math inline">\(min_{count}\)</span> = 1)</p>
+</div>
+</div>
+<div id="sweeping-up" class="section level1">
+<h1>Sweeping up</h1>
+<p>The simulation will be much more interesting if we can sweep through parameter values and see how these influence the network structure. To faciliate this (and other tests), I’ll create a function that we can run over and over.</p>
+<pre class="r"><code>RandomFW = function(N_species, p_basal, prob=0.5, seed=777) {
+    
+    # create grid 
+    e = expand.grid(1:N_species, 1:N_species)
+    e$basal = e$Var1 &lt;= (N_species * p_basal)
+    
+    # set basal species to 0
+    e$ij = NA
+    e[ e$basal == T, &#39;ij&#39;] = 0
+    
+    # Find N basal and N consumers
+    N_basal = length(e[ e$basal == T, &#39;ij&#39;])
+    N_consumers = nrow(e) - N_basal
+    
+    # Bernoulii trial
+    e[ e$basal == F, &#39;ij&#39;] = rbinom( n=N_consumers, size=1, prob=prob )
+    
+    g = graph.data.frame(e[ e$ij == 1, ], vertices = data.frame(name=1:N_species))
+    return(g)
+}</code></pre>
+<p>If we feed a sequence of <code>p_basal</code> values into this function, we can generate multiple food webs.</p>
+<pre class="r"><code>pseq = seq(0.1,0.9,0.1)
+l = list()
+
+for(i in seq_along(pseq)) {
+    fw = RandomFW(N_species =  25, 
+                   p_basal  =  pseq[i], 
+                   prob     =  0.5, 
+                   seed     =  777 )
+    l[[i]] = fw
+}</code></pre>
+<div id="generality-and-vulnerability-redux" class="section level2">
+<h2>Generality and Vulnerability (redux)</h2>
+<p>With this list of <code>igraph</code> objects, we can apply the summary statistics used above. First, let’s plot the in- and out-degree distributions for each of the networks.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-17"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" alt="In- and out-degree distributions for increasing values of `p_basal`." width="768" />
+<p class="caption">
+Figure 8: In- and out-degree distributions for increasing values of <code>p_basal</code>.
+</p>
+</div>
+<p>Intuitively, as the proportion of basal species increases, average in-degree and out-degree both decrease. This suggests that a food web made up of predominately autotrophs has a small number of generalist consumers and many plants that are not vulnerable to predations. We should thus expect that such systems are much more likely influence by density dependence, something that can be studied <em>in silico</em> using Jacobian matrices and deterministic differential equations <span class="citation">(<a href="#ref-novak2016characterizing" role="doc-biblioref">3</a>)</span>.</p>
+</div>
+<div id="path-length-redux" class="section level2">
+<h2>Path length (redux)</h2>
+<p>Now let’s see how APL is influenced by the change in basal species proportion.</p>
+<pre class="r"><code>unlist(lapply(l, average.path.length))</code></pre>
+<pre><code>## [1] 1.509058 1.522917 1.613426 1.544444 1.544872 1.458333 1.494792 1.575000
+## [9] 1.000000</code></pre>
+<p>APL remains similar across all of the iterations. This is a product of most random graphs. Here are three examples using the <code>erdos.renyi.game</code>:</p>
+<pre class="r"><code>average.path.length(erdos.renyi.game(25, directed = T, loops = T, p.or.m = 0.5))</code></pre>
+<pre><code>## [1] 1.498333</code></pre>
+<pre class="r"><code>average.path.length(erdos.renyi.game(100, directed = T, loops = T, p.or.m = 0.5))</code></pre>
+<pre><code>## [1] 1.502424</code></pre>
+<pre class="r"><code>average.path.length(erdos.renyi.game(1000, directed = T, loops = T, p.or.m = 0.5))</code></pre>
+<pre><code>## [1] 1.500179</code></pre>
+</div>
+<div id="triads-redux" class="section level2">
+<h2>Triads (redux)</h2>
+<p>Our final description will focus on the triad census for each simulated network. We follow a similar procedure as the one taken to show changes to the degree distributions.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-20"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-20-1.png" alt="Triad counts for increasing values of p_basal." width="624" />
+<p class="caption">
+Figure 9: Triad counts for increasing values of p_basal.
+</p>
+</div>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references csl-bib-body">
+<div id="ref-petchey2008size" class="csl-entry">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">O. L. Petchey, A. P. Beckerman, J. O. Riede, P. H. Warren, Size, foraging, and food web structure. <em>Proceedings of the National Academy of Sciences</em> <strong>105</strong>, 4191–4196 (2008).</div>
+</div>
+<div id="ref-baiser2016motifs" class="csl-entry">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">B. Baiser, R. Elhesha, T. Kahveci, Motifs in the assembly of food web networks. <em>Oikos</em> <strong>125</strong>, 480–491 (2016).</div>
+</div>
+<div id="ref-novak2016characterizing" class="csl-entry">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">M. Novak, <em>et al.</em>, Characterizing species interactions to understand press perturbations: What is the community matrix. <em>Annual Review of Ecology, Evolution, and Systematics</em> <strong>47</strong>, 409–432 (2016).</div>
+</div>
+</div>
+</div>

@@ -19,7 +19,7 @@ Department of Anthropology<br>
 The Ohio State University<br>
 scaggs.32@osu.edu</p>
 
-Download a copy of my full CV [here](static/files/CV.2.pdf)
+Download a copy of my full CV ![here](/files/CV.2.pdf)
 
 ### Research Interests 
 

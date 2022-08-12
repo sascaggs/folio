@@ -1,0 +1,205 @@
+---
+title: 'Drinking, rating, and modeling tequila  '
+author: 'Shane A. Scaggs '
+date: '2022-07-14'
+slug: drinking-rating-and-modeling-tequila
+categories:
+  - Statistics
+tags:
+  - Bayes
+  - Data Analysis
+  - Modeling
+draft: yes
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="abstract" class="section level1">
+<h1>Abstract</h1>
+<p>Tequila comes in a variety of styles that have different characteristics. Being tequila ethusiasts, we kept track of the tequilas that we drank during the last ~2 years and gave each tequila a subjective rating. To understand our preferences and the influence of bottle price on perception of quality, we developed Bayesian models to detect patterns. Based on the results, we make predictions about the qualities of tequilas that we have not drunk.</p>
+</div>
+<div id="background" class="section level1">
+<h1>Background</h1>
+<p>If you ask me about my favorite spirits, without hesitation I will gush about tequila. I believe tequila provides something for everyone. Few other spirits can be sipped, shot, shaken, or stirred with such flexibility.</p>
+<p>Tequilas come in a range of styles that are amenable to preferences for other common spirits. White rum and moonshine drinkers might enjoy a <em>silver</em> tequila. A <em>reposado</em> comes closer to satisfying a bourbon enthusiast. Oak aged <em>añejo</em> and extra <em>añejo</em> tequilas take on some of the qualities of cask conditioned whiskeys with the richness of a rum made from cane sugar. If we include <em>mezcal</em> – a smokey liquor made with espadìn instead of blue agave – then tequila even has an analog to Scotch whiskey.</p>
+</div>
+<div id="data-collection" class="section level1">
+<h1>Data collection</h1>
+<p>Back in 2020, my partner and I started keeping track of the tequilas we try. We did this to explore the differences in our own tequila preferences and to encourage us to explore other styles and distillers. Each time we tasted a tequila, we wrote down the <code>Date</code>, the name of each <code>Drinker</code>, the <code>Brand</code> and <code>Type</code> of tequila, the <code>Price</code>, and the <code>Location</code> where the tequila was purchased (just in case we want to purchase it again).</p>
+<div id="subjective-ratings" class="section level2">
+<h2>Subjective ratings</h2>
+<p>When we taste a tequila, we pour a 1.5 ounce shot for each drinker. We drink the tequila straight – no citrus, no salt – and give a subjective rating from 1 to 10 on four qualities:</p>
+<ol style="list-style-type: decimal">
+<li><p><code>Smoothness</code> (1-10) – A measure of drinkability. How easily does the tequila go down? 10 is smooth as water. 1 burns like hot fire cider.</p></li>
+<li><p><code>Complexity</code> (1-10) – A measure of flavor profile. Does the tequila have many qualities, a single strong flavor, or none at all? 10 is indescribably complex. 1 is a lack of flavor altogether.</p></li>
+<li><p><code>Aftertaste</code> (1-10) – A measure of the experience. Some spirits start strong but do not end well. Does the tequila shot linger on pleasantly afterward? 10 is a delightful aftertaste with impeccable mouthfeel. 1 is like a cheap vodka or a bitter astringent.</p></li>
+<li><p><code>Sweetness</code> (1-5) – How sweet is the tequila? 5 is a sweet syrupy liquour. 1 is like a dry vodka or gin.</p></li>
+</ol>
+<p>Because these scales are totally subjective and were not designed around any conventional spirit tasting scales, we used statements like those above to prime each drinker and give them a anchor point for low and high ratings. We always as each drinker which <code>Citrus</code> they would pair the tequila with (lime, orange, or grapefruit), and if they had any remaining <code>Notes</code> about the experience.</p>
+</div>
+</div>
+<div id="data-description" class="section level1">
+<h1>Data Description</h1>
+<p>Let’s start with a descriptive exploration of the data set.</p>
+<div id="tasting-events" class="section level2">
+<h2>Tasting events</h2>
+<p>First I want to create a graph that shows each time that we did a tasting – a tasting event – and visualize the price of the tequila that was tasted.
+To begin, I have prepare the dates for the graph. Here is an example of the date format from these data.</p>
+<pre><code>## [1] &quot;Friday, February 21, 2020&quot;</code></pre>
+<p>I need to recombine these date elements to a format recognized by <code>as.Date</code>. The equivalent date expression for the structure shown above would be: <code>"%A, %B %d, %Y"</code>. The commas matter in this expression and you can view <a href="https://www.r-bloggers.com/2013/08/date-formats-in-r/">this post</a> for explanations about date expressions.</p>
+<pre class="r"><code>teq %&gt;%
+  mutate(.Date = as.Date(Date, format = c(&quot;%A, %B %d, %Y&quot;))) %&gt;%
+  select(Date, .Date) %&gt;%
+  head()</code></pre>
+<pre><code>##                        Date      .Date
+## 1 Friday, February 21, 2020 2020-02-21
+## 2 Friday, February 21, 2020 2020-02-21
+## 3  Friday, January 31, 2020 2020-01-31
+## 4  Friday, January 31, 2020 2020-01-31
+## 5     Friday, July 23, 2021 2021-07-23
+## 6     Friday, July 23, 2021 2021-07-23</code></pre>
+<p>Since rows are repeated for each drinker, and each drinker receives a shot from the same bottle, this means each date should have the same price, and I only need the unique combinations of <code>.Date</code> and <code>Price</code> to make the graph. I’ll also keep the <code>Type</code> variable so that I can view each type of tequila was tasted.</p>
+<pre class="r"><code>teq %&gt;%
+  mutate(.Date = as.Date(Date, format = c(&quot;%A, %B %d, %Y&quot;))) %&gt;%
+  select(.Date, Price, Type) %&gt;%
+  unique() %&gt;% 
+  head()</code></pre>
+<pre><code>##         .Date Price     Type
+## 1  2020-02-21 28.99    Anejo
+## 3  2020-01-31 22.99   Silver
+## 5  2021-07-23 38.99 Reposado
+## 9  2021-07-23 51.99   Silver
+## 13 2020-07-07 38.99   Mezcal
+## 15 2020-07-07 42.99   Silver</code></pre>
+<p>Now the data is ready to be visualized. I’ll create a point and line graph, where each point is a tequila tasting event.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-5"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" alt="Tequila tasing from January 2020 to June 2022. Each point is a tequila that was tasted. The color of the points indicates the type of tequila." width="768" />
+<p class="caption">
+Figure 1: Tequila tasing from January 2020 to June 2022. Each point is a tequila that was tasted. The color of the points indicates the type of tequila.
+</p>
+</div>
+<p>As the data collection continued, the price of the tequilas we tried varied more, and we purchased more expensive tequilas. The 2 most expensive tequila(s) – Codigo, La Adelita – had a price of $51.99.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-6"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" alt="The distribution of prices for each style of tequila. Five have relatively uniform distributions whereas Mezcal appears not to have low values." width="624" />
+<p class="caption">
+Figure 2: The distribution of prices for each style of tequila. Five have relatively uniform distributions whereas Mezcal appears not to have low values.
+</p>
+</div>
+</div>
+<div id="ratings" class="section level2">
+<h2>Ratings</h2>
+<p>How do ratings vary across drinkers? And how correlated are the ratings? Before delving into these questions, we should state some hypotheses <em>a priori</em>.</p>
+<p>First, we can expect a lot of individual variation in the ratings. We will control for this, and for the repeated measurements across drinker by giving each drinker a varying intercept. Although each drinker likely has there own reasons for giving the ratings that they do, we already know that <code>Sweetness</code> should influence the ratings of some drinkers more than others. For this reason, when we assess ratings like <code>Complexity</code> or <code>Aftertaste</code>, we will let the slope for <code>Sweetness</code> vary for each <code>Drinker</code>. This will allow us to see whether people who do not like sweet tequilas will rate them poorly.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-7"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" alt="Individual variation and uneven sampling in tequila ratings." width="624" />
+<p class="caption">
+Figure 3: Individual variation and uneven sampling in tequila ratings.
+</p>
+</div>
+<p>Our other main covariates are <code>Price</code> and <code>Type</code>. We might expect that there is a positive relationship between price and each rating. But we also know that silver tequilas tend to be priced lower than other types, in general. That means that if price does have a positive effect on the ratings, that effect may be different for silver tequilas than for the other types. So we will also let the slope of <code>Price</code> vary across a random intercept of <code>Type</code>.</p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="624" style="display: block; margin: auto;" /></p>
+<p>I expect that <code>Price</code> will have a slight positive effect on all three of the ratings, but that effect will probably be greater for the aftertaste since some low priced tequilas have a notoriously bad aftertaste.</p>
+<p>The final step is to rescale our continuous predictors to make it easier to set priors for them. These are <code>Sweetness</code> and <code>Price</code>.</p>
+<pre class="r"><code>teq$.Price &lt;- scale(teq$Price)
+teq$.Sweetness &lt;- scale(teq$Sweetness)</code></pre>
+</div>
+</div>
+<div id="model-design" class="section level1">
+<h1>Model design</h1>
+<p>Tequila ratings are discrete, but they are not counts because they can only take on values between 1 and 10. This makes each rating similar to an ordered category, which <code>brms</code> implements as a categorical model with a logit link function. <a href="https://psyarxiv.com/x8swp/">This paper</a> provides a helpful tutorial.</p>
+<div id="mechanistic-model" class="section level2">
+<h2>Mechanistic model</h2>
+<p>The specific mechanics of our model are stored as a formula using <code>bf</code>. For example, we write the model for <code>Smoothness</code> as:</p>
+<blockquote>
+<p><code>Smoothness ~ 1 + (Sweetness | Drinker) + (Price | Type)</code></p>
+</blockquote>
+<p>where <code>(Sweetness | Drinker)</code> specify random slopes of <code>Sweetness</code> on each random intercept for <code>Drinker</code>, and <code>(Price | Type)</code> does the same for <code>Price</code> slopes and <code>Type</code> intercepts. We include the model <code>family</code> in order to use the formula to set priors. In <code>brms</code> a categorical model is specified using <code>cumulative()</code>.</p>
+<pre class="r"><code># S = smoothness, A = aftertaste, C = complexity
+formS &lt;- bf( Smoothness ~ 1 + (.Sweetness | Drinker) + (.Price | Type), family = cumulative() )
+formA &lt;- bf( Aftertaste ~ 1 + (.Sweetness | Drinker) + (.Price | Type), family = cumulative() )
+formC &lt;- bf( Complexity ~ 1 + (.Sweetness | Drinker) + (.Price | Type), family = cumulative() )</code></pre>
+<p>Figure <a href="#fig:sweet">4</a> shows how the effect of sweetness of each rating varies between two participants.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:sweet"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/sweet-1.png" alt="The relationship between sweetness and aftertaste for Shane and Lucia." width="768" />
+<p class="caption">
+Figure 4: The relationship between sweetness and aftertaste for Shane and Lucia.
+</p>
+</div>
+</div>
+<div id="priors" class="section level2">
+<h2>Priors</h2>
+<p>Use the <code>get_prior</code> function to retrieve the parameters for the model formulas specified above. We will have an <code>sd</code> parameter for the variation within each group. Additionally, we have <code>cor</code> parameters that tell the model our expectations about the correlation beween the random slopes and intercepts.</p>
+<pre class="r"><code>get_prior(formS, data=teq)</code></pre>
+<pre><code>##                 prior     class       coef   group resp dpar nlpar bound
+##                lkj(1)       cor                                         
+##                lkj(1)       cor            Drinker                      
+##                lkj(1)       cor               Type                      
+##  student_t(3, 0, 2.5) Intercept                                         
+##  student_t(3, 0, 2.5) Intercept          1                              
+##  student_t(3, 0, 2.5) Intercept          2                              
+##  student_t(3, 0, 2.5) Intercept          3                              
+##  student_t(3, 0, 2.5) Intercept          4                              
+##  student_t(3, 0, 2.5) Intercept          5                              
+##  student_t(3, 0, 2.5) Intercept          6                              
+##  student_t(3, 0, 2.5) Intercept          7                              
+##  student_t(3, 0, 2.5) Intercept          8                              
+##  student_t(3, 0, 2.5)        sd                                         
+##  student_t(3, 0, 2.5)        sd            Drinker                      
+##  student_t(3, 0, 2.5)        sd .Sweetness Drinker                      
+##  student_t(3, 0, 2.5)        sd  Intercept Drinker                      
+##  student_t(3, 0, 2.5)        sd               Type                      
+##  student_t(3, 0, 2.5)        sd     .Price    Type                      
+##  student_t(3, 0, 2.5)        sd  Intercept    Type                      
+##        source
+##       default
+##  (vectorized)
+##  (vectorized)
+##       default
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##       default
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)
+##  (vectorized)</code></pre>
+<p>I set my <code>sd</code> parameters to an exponential distribution because the exponential is 1) always positive and 2) it is skeptical of very large variations. Here is an example of <code>exponential(0.1)</code>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-12"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" alt="An example of an exponential prior with rate = 0.1." width="384" />
+<p class="caption">
+Figure 5: An example of an exponential prior with rate = 0.1.
+</p>
+</div>
+<p>We also need to set a prior for the global <code>Intercept</code>. This is the expected distribution for the average rating. we have no clear reason to expect a high or low average, but we do what a distribution that is bounded between 1 and 10. We can do this a number of ways but a very simple approach would be too choose a normal distribution with a small standard deviation.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-13"></span>
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" alt="An example of a Gaussian prior with mean = 5.5 and standard deviation = 1.5." width="384" />
+<p class="caption">
+Figure 6: An example of a Gaussian prior with mean = 5.5 and standard deviation = 1.5.
+</p>
+</div>
+<p>The last prior is for the parameter <code>cor</code> which encodes our expectation about how correlated the slopes and intercepts are. This we can leave as a default, <code>lkj(1)</code>, which is a uniform prior from -1 to 1.</p>
+<pre class="r"><code>prior1 &lt;- c( prior(exponential(0.1), class = &#39;sd&#39;), 
+             prior(normal(5.5,1.5),  class = &#39;Intercept&#39;) )
+prior1</code></pre>
+<pre><code>##             prior     class coef group resp dpar nlpar bound source
+##  exponential(0.1)        sd                                    user
+##  normal(5.5, 1.5) Intercept                                    user</code></pre>
+<p>Now that we have a prior, we can run some prior predictive simulations to see that this model structure provides plausible outcomes for our data. Let’s focus just on the <code>Smoothness</code> model to start.</p>
+<pre class="r"><code>ppsim &lt;- brm( formS, 
+              family = binomial(), 
+              data = teq, 
+              prior = prior1,
+              cores = 2, 
+              chains = 2, 
+              sample_prior = &#39;only&#39; )</code></pre>
+<p>While our response data varies from 1 to 9, the predictions made by the prior predictive simulation have considerably less variation. We can see this by making predictions with the <code>ppsim</code> model and then comparing those predictions to the observed values.</p>
+</div>
+</div>

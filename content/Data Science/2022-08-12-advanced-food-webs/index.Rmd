@@ -1,0 +1,17 @@
+---
+title: 'Advanced food webs'
+author: Shane A. Scaggs
+date: '2022-08-12'
+slug: advanced-food-webs
+categories:
+  - Networks
+tags:
+  - ecology
+  - simulation
+  - theory
+  - food webs
+draft: yes
+---
+
+
+Welcome to the second post focusing on simulating food webs. We left off with a random food web function that we used to look at how different proportions of basal species can influence the structure of a random food web. Check that post out [here](/2022/07/28/basic-properties-of-food-webs/).   

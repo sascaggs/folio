@@ -1,0 +1,13 @@
+---
+title: 'Bayesian models for fun '
+author: 'Shane A. Scaggs '
+date: '2022-07-01'
+slug: bayesian-models-for-fun
+categories:
+  - Statistics
+tags:
+  - Bayes
+  - Modeling
+  - Data Analysis
+draft: yes
+---

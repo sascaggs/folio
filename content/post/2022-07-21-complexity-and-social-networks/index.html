@@ -1,0 +1,50 @@
+---
+title: Complexity and social networks
+author: Shane A. Scaggs
+date: '2022-07-21'
+slug: complexity-and-social-networks
+categories:
+  - Networks
+tags:
+  - theory
+  - simulation
+  - complexity
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<pre class="r"><code>library(igraph)
+library(tidygraph)
+library(ggraph)
+library(patchwork)</code></pre>
+<pre class="r"><code># isomorphic structures A and B
+A &lt;- matrix(c(0,1,1,1,0,0,0,0,
+              1,0,1,1,0,0,0,0,
+              1,1,0,1,0,0,0,0,
+              1,1,1,0,0,0,0,0,
+              0,0,0,0,0,1,1,1,
+              0,0,0,0,1,0,1,1,
+              0,0,0,0,1,1,0,1,
+              0,0,0,0,1,1,1,0), nrow=8)
+
+B &lt;- matrix(c(0,0,1,0,1,0,1,0,
+              0,0,0,1,0,1,0,1,
+              1,0,0,0,1,0,1,0,
+              0,1,0,0,0,1,0,1,
+              1,0,1,0,0,0,1,0,
+              0,1,0,1,0,0,0,1,
+              1,0,1,0,1,0,0,0,
+              0,1,0,1,0,1,0,0), nrow = 8)
+
+
+as_tbl_graph(graph.adjacency(A)) %&gt;%
+    ggraph() + geom_edge_link() + 
+    theme_graph() + 
+
+as_tbl_graph(graph.adjacency(B)) %&gt;%
+    ggraph() + geom_edge_link() + 
+    theme_graph()</code></pre>
+<pre><code>## Using `stress` as default layout
+## Using `stress` as default layout</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>

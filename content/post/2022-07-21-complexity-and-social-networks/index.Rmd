@@ -1,0 +1,53 @@
+---
+title: Complexity and social networks
+author: Shane A. Scaggs
+date: '2022-07-21'
+slug: complexity-and-social-networks
+categories:
+  - Networks
+tags:
+  - theory
+  - simulation
+  - complexity
+---
+
+```{r, message=F, warning=F}
+library(igraph)
+library(tidygraph)
+library(ggraph)
+library(patchwork)
+```
+
+
+```{r}
+# isomorphic structures A and B
+A <- matrix(c(0,1,1,1,0,0,0,0,
+              1,0,1,1,0,0,0,0,
+              1,1,0,1,0,0,0,0,
+              1,1,1,0,0,0,0,0,
+              0,0,0,0,0,1,1,1,
+              0,0,0,0,1,0,1,1,
+              0,0,0,0,1,1,0,1,
+              0,0,0,0,1,1,1,0), nrow=8)
+
+B <- matrix(c(0,0,1,0,1,0,1,0,
+              0,0,0,1,0,1,0,1,
+              1,0,0,0,1,0,1,0,
+              0,1,0,0,0,1,0,1,
+              1,0,1,0,0,0,1,0,
+              0,1,0,1,0,0,0,1,
+              1,0,1,0,1,0,0,0,
+              0,1,0,1,0,1,0,0), nrow = 8)
+
+
+as_tbl_graph(graph.adjacency(A)) %>%
+    ggraph() + geom_edge_link() + 
+    theme_graph() + 
+
+as_tbl_graph(graph.adjacency(B)) %>%
+    ggraph() + geom_edge_link() + 
+    theme_graph()
+
+
+```
+

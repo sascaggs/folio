@@ -1,0 +1,288 @@
+---
+title: 'Drinking, rating, and modeling tequila  '
+author: 'Shane A. Scaggs '
+date: '2022-07-14'
+slug: drinking-rating-and-modeling-tequila
+categories:
+  - Statistics
+tags:
+  - Bayes
+  - Data Analysis
+  - Modeling
+draft: yes
+---
+
+```{r, message=F, warning=F, echo=F}
+options(mc.cores = parallel::detectCores())
+
+library(tidyverse)
+library(tidybayes)
+library(modelr)
+library(brms)
+teq <- read.csv(file = "C:\\Users\\scagg\\Documents\\Shane's Projects\\Data\\At home\\TequilaTasting.csv")
+```
+
+# Abstract 
+
+Tequila comes in a variety of styles that have different characteristics. Being tequila ethusiasts, we kept track of the tequilas that we drank during the last ~2 years and gave each tequila a subjective rating. To understand our preferences and the influence of bottle price on perception of quality, we developed Bayesian models to detect patterns. Based on the results, we make predictions about the qualities of tequilas that we have not drunk. 
+
+# Background
+
+If you ask me about my favorite spirits, without hesitation I will gush about tequila. I believe tequila provides something for everyone. Few other spirits can be sipped, shot, shaken, or stirred with such flexibility. 
+
+Tequilas come in a range of styles that are amenable to preferences for other common spirits. White rum and moonshine drinkers might enjoy a *silver* tequila. A *reposado* comes closer to satisfying a bourbon enthusiast. Oak aged *añejo* and extra *añejo* tequilas take on some of the qualities of cask conditioned whiskeys with the richness of a rum made from cane sugar. If we include *mezcal* -- a smokey liquor made with espadìn instead of blue agave -- then tequila even has an analog to Scotch whiskey.
+
+# Data collection 
+
+Back in 2020, my partner and I started keeping track of the tequilas we try. We did this to explore the differences in our own tequila preferences and to encourage us to explore other styles and distillers. Each time we tasted a tequila, we wrote down the `Date`, the name of each `Drinker`, the `Brand` and `Type` of tequila, the `Price`, and the `Location` where the tequila was purchased (just in case we want to purchase it again). 
+
+## Subjective ratings
+
+When we taste a tequila, we pour a 1.5 ounce shot for each drinker. We drink the tequila straight -- no citrus, no salt -- and give a subjective rating from 1 to 10 on four qualities: 
+
+1. `Smoothness` (1-10) -- A measure of drinkability. How easily does the tequila go down? 10 is smooth as water. 1 burns like hot fire cider.
+
+2. `Complexity` (1-10) -- A measure of flavor profile. Does the tequila have many qualities, a single strong flavor, or none at all? 10 is indescribably complex. 1 is a lack of flavor altogether.
+
+3. `Aftertaste` (1-10) -- A measure of the experience. Some spirits start strong but do not end well. Does the tequila shot linger on pleasantly afterward? 10 is a delightful aftertaste with impeccable mouthfeel. 1 is like a cheap vodka or a bitter astringent.
+
+4. `Sweetness` (1-5) -- How sweet is the tequila? 5 is a sweet syrupy liquour. 1 is like a dry vodka or gin. 
+
+Because these scales are totally subjective and were not designed around any conventional spirit tasting scales, we used statements like those above to prime each drinker and give them a anchor point for low and high ratings. We always as each drinker which `Citrus` they would pair the tequila with (lime, orange, or grapefruit), and if they had any remaining `Notes` about the experience. 
+
+# Data Description
+
+Let's start with a descriptive exploration of the data set. 
+
+## Tasting events 
+
+First I want to create a graph that shows each time that we did a tasting -- a tasting event --  and visualize the price of the tequila that was tasted. 
+To begin, I have prepare the dates for the graph. Here is an example of the date format from these data. 
+
+```{r, message=FALSE, warning=F, echo=F}
+teq$Date[1] 
+```
+
+I need to recombine these date elements to a format recognized by `as.Date`. The equivalent date expression for the structure shown above would be: `"%A, %B %d, %Y"`. The commas matter in this expression and you can view [this post](https://www.r-bloggers.com/2013/08/date-formats-in-r/) for explanations about date expressions.
+
+```{r, message=FALSE, warning=F}
+teq %>%
+  mutate(.Date = as.Date(Date, format = c("%A, %B %d, %Y"))) %>%
+  select(Date, .Date) %>%
+  head()
+```
+
+Since rows are repeated for each drinker, and each drinker receives a shot from the same bottle, this means each date should have the same price, and I only need the unique combinations of `.Date` and `Price` to make the graph. I'll also keep the `Type` variable so that I can view each type of tequila was tasted.
+
+
+```{r}
+teq %>%
+  mutate(.Date = as.Date(Date, format = c("%A, %B %d, %Y"))) %>%
+  select(.Date, Price, Type) %>%
+  unique() %>% 
+  head()
+```
+
+Now the data is ready to be visualized. I'll create a point and line graph, where each point is a tequila tasting event. 
+
+```{r, warning=F, message=F, fig.width=8, fig.height=4, echo=FALSE, fig.align='center', fig.cap='Tequila tasing from January 2020 to June 2022. Each point is a tequila that was tasted. The color of the points indicates the type of tequila.'}
+
+tm1 <- theme_void() + 
+  theme(
+    plot.margin = unit(c(1,1.5,1,1,5), 'cm'), 
+    panel.background = element_rect(color='black', fill='#080701'), 
+    panel.border = element_rect(color='white',fill='#00000000', size=1),
+    plot.background = element_rect(color='black', fill='#080701'),
+    text = element_text(color='white', family = 'sans', size=12), 
+    axis.text = element_text(color='white', family='mono'), 
+    axis.title = element_text(color='white', family = 'sans'), 
+    axis.ticks.length = unit(-0.1, 'in'), 
+    axis.ticks = element_line(color='white', size=1)  )
+spal <- colorRampPalette(colors = c('#AD003F','#BB440C','#D2A52E','#86DE67','#00C994'))
+
+teq %>%
+  mutate(.Date = as.Date(Date, format = c("%A, %B %d, %Y"))) %>%
+  select(.Date, Price, Type) %>%
+  unique() %>%
+  ggplot() + 
+  geom_smooth(aes(.Date,Price), alpha=0.1, color='#ffffff77', lty=1, lwd=0.1) + 
+  geom_point(aes(x=.Date, y=Price, col=Type), size=2) + 
+  geom_line(aes(x=.Date, y=Price), col='white', alpha=0.35, lwd=1) + 
+  geom_rug(aes(x=.Date, y=Price, col=Type)) + 
+  scale_color_manual(values = spal(6)) + 
+  ylim(c(15,55)) + labs(x="Date",y="Price ($)") + 
+  tm1
+```
+
+As the data collection continued, the price of the tequilas we tried varied more, and we purchased more expensive tequilas. The `r length(unique(teq[ !is.na(teq$Price) & teq$Price == max(teq$Price,na.rm = T), 'Brand']))` most expensive tequila(s) -- `r unique(teq[ !is.na(teq$Price) & teq$Price == max(teq$Price,na.rm = T), 'Brand'])` -- had a price of \$`r max(teq$Price, na.rm=T)`. 
+
+```{r, message=F, warning=F, echo=F, fig.width=6.5, fig.height=4, fig.align='center', fig.cap='The distribution of prices for each style of tequila. Five have relatively uniform distributions whereas Mezcal appears not to have low values.'}
+teq %>% 
+  select(Date, Type, Price) %>%
+  unique() %>%
+  ggplot() + tm1 + 
+  geom_density(aes(Price, fill=Type, color=Type), position='dodge', alpha=0.7, lwd=1) + 
+  scale_fill_manual(values = spal(6)) + 
+  scale_color_manual(values = spal(8)) + 
+  facet_wrap(~Type) + 
+  theme(legend.position = 'none') + 
+  labs(y='Density', x='Price ($)')
+
+```
+
+## Ratings  
+
+How do ratings vary across drinkers? And how correlated are the ratings? Before delving into these questions, we should state some hypotheses *a priori*. 
+
+First, we can expect a lot of individual variation in the ratings. We will control for this, and for the repeated measurements across drinker by giving each drinker a varying intercept. Although each drinker likely has there own reasons for giving the ratings that they do, we already know that `Sweetness` should influence the ratings of some drinkers more than others. For this reason, when we assess ratings like `Complexity` or `Aftertaste`, we will let the slope for `Sweetness` vary for each `Drinker`. This will allow us to see whether people who do not like sweet tequilas will rate them poorly. 
+
+```{r, fig.height=6, fig.width=6.5, fig.cap="Individual variation and uneven sampling in tequila ratings.", echo=F, warning=F, message=F, fig.align='center'}
+teq %>%
+  select(Drinker, Smoothness, Complexity, Aftertaste, Sweetness, Type) %>%
+  gather(value=value, key=key, -Drinker, -Type) %>%
+  ggplot() + tm1 + 
+  geom_point(aes(Drinker, y=value, fill=Drinker, color=Drinker), alpha=0.7, pch=21) + 
+  scale_fill_manual(values = spal(8)) + 
+  scale_color_manual(values = spal(10)) + 
+  facet_wrap(~key, nrow=4) + 
+  theme(legend.position = 'none') + 
+  labs(x='Drinker', y='Rating') 
+```
+
+Our other main covariates are `Price` and `Type`. We might expect that there is a positive relationship between price and each rating. But we also know that silver tequilas tend to be priced lower than other types, in general. That means that if price does have a positive effect on the ratings, that effect may be different for silver tequilas than for the other types. So we will also let the slope of `Price` vary across a random intercept of `Type`.  
+
+```{r, message=F, warning=F, echo=F, fig.width=6.5, fig.height=3.5, fig.align='center'}
+teq %>%
+  select(Complexity, Smoothness, Aftertaste) %>%
+  gather() %>%
+  ggplot() + tm1 + 
+  geom_histogram(aes(value, fill=key, color=key), binwidth=1, alpha=0.5, lwd=1) + 
+  scale_fill_manual(values = spal(4)) + 
+  scale_color_manual(values = spal(6)) +
+  facet_wrap(~key) + ylim(c(0,32)) + 
+  theme(legend.position = 'none') + 
+  labs(x='Rating', y='Density') + 
+  scale_x_continuous(breaks = seq(0,10,2))
+
+```
+
+
+I expect that `Price` will have a slight positive effect on all three of the ratings, but that effect will probably be greater for the aftertaste since some low priced tequilas have a notoriously bad aftertaste.  
+
+The final step is to rescale our continuous predictors to make it easier to set priors for them. These are `Sweetness` and `Price`. 
+
+```{r}
+teq$.Price <- scale(teq$Price)
+teq$.Sweetness <- scale(teq$Sweetness)
+```
+
+
+
+# Model design 
+
+Tequila ratings are discrete, but they are not counts because they can only take on values between 1 and 10. This makes each rating similar to an ordered category, which `brms` implements as a categorical model with a logit link function. [This paper](https://psyarxiv.com/x8swp/) provides a helpful tutorial.  
+
+## Mechanistic model 
+
+The specific mechanics of our model are stored as a formula using `bf`. For example, we write the model for `Smoothness` as: 
+
+> `Smoothness ~ 1 + (Sweetness | Drinker) + (Price | Type)`
+
+where `(Sweetness | Drinker)` specify random slopes of `Sweetness` on each random intercept for `Drinker`, and `(Price | Type)` does the same for `Price` slopes and `Type` intercepts. We include the model `family` in order to use the formula to set priors. In `brms` a categorical model is specified using `cumulative()`.
+
+```{r}
+# S = smoothness, A = aftertaste, C = complexity
+formS <- bf( Smoothness ~ 1 + (.Sweetness | Drinker) + (.Price | Type), family = cumulative() )
+formA <- bf( Aftertaste ~ 1 + (.Sweetness | Drinker) + (.Price | Type), family = cumulative() )
+formC <- bf( Complexity ~ 1 + (.Sweetness | Drinker) + (.Price | Type), family = cumulative() )
+```
+
+Figure \@ref(fig:sweet) shows how the effect of sweetness of each rating varies between two participants.
+
+```{r sweet, message=F, warning=F, fig.width=8, fig.height=3.5, fig.cap='The relationship between sweetness and aftertaste for Shane and Lucia.', echo=F, fig.align='center'}
+teq %>%
+  filter(Drinker == 'Shane' | Drinker == 'Lucia') %>%
+  select(Drinker, Complexity, Smoothness, Aftertaste, Sweetness) %>%
+  gather(key=Measure, value=Rating, -Drinker, -Sweetness) %>%
+  ggplot() + tm1 + 
+  geom_point(aes(Sweetness, Rating, color=Drinker, fill=Drinker), pch=21, alpha=0.5, 
+             position=position_jitter(width = 0.25, height = 0.25, seed=777)) + 
+  geom_smooth(aes(Sweetness, Rating, color=Drinker, fill=Drinker), alpha=0.2, 
+              method = 'lm') + 
+  scale_fill_manual(values = spal(2)) + 
+  scale_color_manual(values = spal(2)) +
+  facet_wrap(~Measure) + 
+  #theme(legend.position = 'none') + 
+  labs(x='Sweetness', y='Rating') 
+```
+
+
+
+## Priors  
+
+Use the `get_prior` function to retrieve the parameters for the model formulas specified above. We will have an `sd` parameter for the variation within each group. Additionally, we have `cor` parameters that tell the model our expectations about the correlation beween the random slopes and intercepts. 
+
+```{r, warning=F, message=F}
+get_prior(formS, data=teq)
+```
+
+I set my `sd` parameters to an exponential distribution because the exponential is 1) always positive and 2) it is skeptical of very large variations. Here is an example of `exponential(0.1)`. 
+
+```{r, fig.width=4, fig.height=3, fig.align='center', warning=F, message=F, echo=F, fig.cap="An example of an exponential prior with rate = 0.1."}
+tibble(rexp = rexp(1000, rate=.1)) %>%
+  ggplot() + tm1 + 
+  geom_density(aes(rexp), fill='cyan', color='cyan', alpha=0.5, size=1)
+```
+
+We also need to set a prior for the global `Intercept`. This is the expected distribution for the average rating. we have no clear reason to expect a high or low average, but we do what a distribution that is bounded between 1 and 10. We can do this a number of ways but a very simple approach would be too choose a normal distribution with a small standard deviation. 
+
+```{r, fig.width=4, fig.height=3, fig.align='center', warning=F, message=F, echo=F, fig.cap="An example of a Gaussian prior with mean = 5.5 and standard deviation = 1.5."}
+tibble(rnorm = rnorm(1000, mean=5.5, sd=1.5)) %>%
+  ggplot() + tm1 + 
+  geom_density(aes(rnorm), fill='magenta', color='magenta', alpha=0.5, size=1) + 
+  xlim(c(1,10))
+```
+
+The last prior is for the parameter `cor` which encodes our expectation about how correlated the slopes and intercepts are. This we can leave as a default, `lkj(1)`, which is a uniform prior from -1 to 1. 
+
+
+```{r}
+prior1 <- c( prior(exponential(0.1), class = 'sd'), 
+             prior(normal(5.5,1.5),  class = 'Intercept') )
+prior1
+```
+
+Now that we have a prior, we can run some prior predictive simulations to see that this model structure provides plausible outcomes for our data. Let's focus just on the `Smoothness` model to start.  
+
+```{r, echo=F}
+ppsim <- readRDS("~/Shane's Projects/folio/content/Data Science/2022-07-14-drinking-rating-and-modeling-tequila/ppsim.Rds")
+```
+
+
+```{r, eval=F}
+ppsim <- brm( formS, 
+              family = binomial(), 
+              data = teq, 
+              prior = prior1,
+              cores = 2, 
+              chains = 2, 
+              sample_prior = 'only' )
+```
+
+While our response data varies from 1 to 9, the predictions made by the prior predictive simulation have considerably less variation. We can see this by making predictions with the `ppsim` model and then comparing those predictions to the observed values. 
+
+```{r, eval=F, echo=F}
+teq %>% 
+  data_grid(Drinker, Type, 
+            .Sweetness = c(-2,1,0,1,2), 
+            .Price = c(-2,1,0,1,2)) %>%
+  filter(!Drinker == 'Liz' | !Drinker == 'Jay') %>%
+  add_predicted_draws(ppsim, ndraws = 10, allow_new_levels = T) %>%
+  ggplot() + tm1 + 
+  geom_point(aes(.Price, .prediction, fill=Type, color=Type), alpha=0.6, pch=21) + 
+  facet_wrap(~Type) + 
+  scale_fill_manual(values = spal(6)) + 
+  scale_color_manual(values = spal(8)) 
+  
+```
+
