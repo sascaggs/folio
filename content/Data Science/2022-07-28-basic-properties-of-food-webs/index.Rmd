@@ -2,7 +2,7 @@
 title: Basic properties of food webs
 author: Shane A. Scaggs
 date: '2022-07-28'
-slug: exploring-synthetic-food-webs
+slug: basic-properties-of-food-webs
 categories:
   - Networks
 tags:
