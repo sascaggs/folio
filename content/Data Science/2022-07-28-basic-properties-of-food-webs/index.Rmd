@@ -10,7 +10,6 @@ tags:
   - theory
   - food webs 
   - ecology
-draft: true 
 bibliography: fw.bib
 csl: pnas.csl
 ---

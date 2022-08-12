@@ -10,7 +10,6 @@ tags:
   - theory
   - food webs 
   - ecology
-draft: true 
 bibliography: fw.bib
 csl: pnas.csl
 ---
@@ -79,9 +78,9 @@ e[ e$basal == F, &#39;ij&#39;] = rbinom( n=N_consumers, size=1, prob=0.5 )</code
 <p>Finally we create an igraph object using <code>graph.data.frame</code> using only those edges that were assigned a 1 in the trial.</p>
 <pre class="r"><code>g = graph.data.frame(e[ e$ij == 1, ], vertices = data.frame(name=1:N))
 g</code></pre>
-<pre><code>## IGRAPH d0ba61e DN-- 25 120 -- 
+<pre><code>## IGRAPH 4d8eac0 DN-- 25 120 -- 
 ## + attr: name (v/c), basal (e/l), ij (e/n)
-## + edges from d0ba61e (vertex names):
+## + edges from 4d8eac0 (vertex names):
 ##  [1] 16-&gt;1  19-&gt;1  20-&gt;1  24-&gt;1  16-&gt;2  17-&gt;2  18-&gt;2  19-&gt;2  20-&gt;2  23-&gt;2 
 ## [11] 17-&gt;3  18-&gt;3  21-&gt;3  23-&gt;3  24-&gt;3  25-&gt;3  16-&gt;4  17-&gt;4  18-&gt;4  22-&gt;4 
 ## [21] 24-&gt;4  25-&gt;4  18-&gt;5  21-&gt;5  22-&gt;5  23-&gt;5  24-&gt;5  16-&gt;6  23-&gt;6  16-&gt;7 
