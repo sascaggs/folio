@@ -78,9 +78,9 @@ e[ e$basal == F, &#39;ij&#39;] = rbinom( n=N_consumers, size=1, prob=0.5 )</code
 <p>Finally we create an igraph object using <code>graph.data.frame</code> using only those edges that were assigned a 1 in the trial.</p>
 <pre class="r"><code>g = graph.data.frame(e[ e$ij == 1, ], vertices = data.frame(name=1:N))
 g</code></pre>
-<pre><code>## IGRAPH 4d8eac0 DN-- 25 120 -- 
+<pre><code>## IGRAPH 581f281 DN-- 25 120 -- 
 ## + attr: name (v/c), basal (e/l), ij (e/n)
-## + edges from 4d8eac0 (vertex names):
+## + edges from 581f281 (vertex names):
 ##  [1] 16-&gt;1  19-&gt;1  20-&gt;1  24-&gt;1  16-&gt;2  17-&gt;2  18-&gt;2  19-&gt;2  20-&gt;2  23-&gt;2 
 ## [11] 17-&gt;3  18-&gt;3  21-&gt;3  23-&gt;3  24-&gt;3  25-&gt;3  16-&gt;4  17-&gt;4  18-&gt;4  22-&gt;4 
 ## [21] 24-&gt;4  25-&gt;4  18-&gt;5  21-&gt;5  22-&gt;5  23-&gt;5  24-&gt;5  16-&gt;6  23-&gt;6  16-&gt;7 
@@ -98,7 +98,7 @@ g</code></pre>
 Figure 4: A random food web with 25 nodes and 74 edges.
 </p>
 </div>
-<p>A qualitative inspection of this food web shows that there is no obvious modularity or nestedness, except for that which we have imposed on the graph by prohibited edges that start at basal nodes. Notice that there are also loops that extended from four of the consumer species. These represent cannibalism in food webs and they arise because <code>expand.grid</code> generates every conceivable pair of index values, including an index paired with itself (e.g., 1, 1, TRUE, 0). We could inspect this food web more quantitatively by plotting the degree distributions, examining the path length, and by scanning the network for subgraphs indicate of the trophic positions and motifs shown earlier in this post.</p>
+<p>A qualitative inspection of this food web shows that there is no obvious modularity or nestedness, except for that which we have imposed on the graph by prohibited edges that start at basal nodes. Notice that there are also loops that extended from four of the consumer species. These represent cannibalism in food webs and they arise because <code>expand.grid</code> generates every conceivable pair of index values, including an index paired with itself (e.g., 1, 1, TRUE, 0). We could inspect this food web more quantitatively by plotting the degree distributions, examining the path length, and by scanning the network for subgraphs indicative of the trophic positions and motifs shown earlier in this post.</p>
 <div id="generality-and-vulnerability" class="section level2">
 <h2>Generality and Vulnerability</h2>
 <p>Degree centralities are used in food webs to quantify <em>generality</em> and <em>vulnerability</em>. Species with high out-degree are considered more general consumers; species with high in-degree are considered more vulnerable to predation. Often these measures are summarized using <code>sd</code> in order to assess whether the food web is characterized by a lot of redundancies and competition. However, there is one catch: since basal species cannot predate and would thus have 0 out-degree, they are excluded from the calculation of sd generality.</p>
@@ -126,8 +126,7 @@ Figure 5: Distribution of in-degree (blue) and out-degree (red) as indicators of
 Figure 6: 16 possible triads. Each triad has a 3-digit code associated with it that indicates, respectively, how many mutual, asymmetric, and nonexisent edges it has. Triad 9, for instance, has 0 mutual, 3 asymmetric, and 0 nonexistent. The T stands for <em>transitive</em> while the C stands for <em>cyclical</em>.
 </p>
 </div>
-<p>021U, 021D, and 021C are three of the four motifs shown in figure 1. The fourth – omnivory – is 030T.</p>
-<p>What will we get if we census our simulated food web? We can expect that the triads that can only arise between all consumers may be unlike. This includes any triad that contains 2 or 3 mutual ties (201,210,300). It also includes 030C and 120C, wich are both cyclical and cycles can only arise among consumers. 111D and 111U are similar, although 111U seems more likely since it can arise when two consumer eat each other (a mutual) and one of these consumers either eats another consumer or a basal species. 111D can only occur if a third consumer is present.</p>
+<p>What will we get if we census our simulated food web? We can expect that the triads that can only arise between all consumers may be unlikely. This includes any triad that contains 2 or 3 mutual ties (201,210,300). It also includes 030C and 120C, wich are both cyclical and cycles can only arise among consumers. 111D and 111U are similar, although 111U seems more likely since it can arise when two consumer eat each other (a mutual) and one of these consumers either eats another consumer or a basal species. 111D can only occur if a third consumer is present.</p>
 <p>Let’s take a look. I’ll tag every triad that can only occur if every node is a consumer.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-14"></span>
 <img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" alt="Count of triads observed in the random food web." width="576" />
@@ -181,7 +180,7 @@ for(i in seq_along(pseq)) {
 Figure 8: In- and out-degree distributions for increasing values of <code>p_basal</code>.
 </p>
 </div>
-<p>Intuitively, as the proportion of basal species increases, average in-degree and out-degree both decrease. This suggests that a food web made up of predominately autotrophs has a small number of generalist consumers and many plants that are not vulnerable to predations. We should thus expect that such systems are much more likely influence by density dependence, something that can be studied <em>in silico</em> using Jacobian matrices and deterministic differential equations <span class="citation">(<a href="#ref-novak2016characterizing" role="doc-biblioref">3</a>)</span>.</p>
+<p>Intuitively, as the proportion of basal species increases, average in-degree and out-degree both decrease. This suggests that a food web made up of predominately autotrophs has a small number of generalist consumers and many plants that are not vulnerable to predations. We should thus expect that such systems are influenced by density dependence, something that can be studied <em>in silico</em> using Jacobian matrices and deterministic differential equations <span class="citation">(<a href="#ref-novak2016characterizing" role="doc-biblioref">3</a>)</span>.</p>
 </div>
 <div id="path-length-redux" class="section level2">
 <h2>Path length (redux)</h2>

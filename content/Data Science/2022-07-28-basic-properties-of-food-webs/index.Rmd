@@ -260,7 +260,7 @@ as_tbl_graph(g) %>%
   labs(color=NULL)
 ```
 
-A qualitative inspection of this food web shows that there is no obvious modularity or nestedness, except for that which we have imposed on the graph by prohibited edges that start at basal nodes. Notice that there are also loops that extended from four of the consumer species. These represent cannibalism in food webs and they arise because `expand.grid` generates every conceivable pair of index values, including an index paired with itself (e.g., `r e[1,]`). We could inspect this food web more quantitatively by plotting the degree distributions, examining the path length, and by scanning the network for subgraphs indicate of the trophic positions and motifs shown earlier in this post. 
+A qualitative inspection of this food web shows that there is no obvious modularity or nestedness, except for that which we have imposed on the graph by prohibited edges that start at basal nodes. Notice that there are also loops that extended from four of the consumer species. These represent cannibalism in food webs and they arise because `expand.grid` generates every conceivable pair of index values, including an index paired with itself (e.g., `r e[1,]`). We could inspect this food web more quantitatively by plotting the degree distributions, examining the path length, and by scanning the network for subgraphs indicative of the trophic positions and motifs shown earlier in this post. 
 
 ## Generality and Vulnerability 
 
@@ -314,9 +314,8 @@ A common way to describe a network is to do a census of specific substructures w
 knitr::include_graphics(path = 'triads.PNG')
 ```
 
-021U, 021D, and 021C are three of the four motifs shown in figure 1. The fourth -- omnivory -- is 030T.
 
-What will we get if we census our simulated food web? We can expect that the triads that can only arise between all consumers may be unlike. This includes any triad that contains 2 or 3 mutual ties (201,210,300). It also includes 030C and 120C, wich are both cyclical and cycles can only arise among consumers. 111D and 111U are similar, although 111U seems more likely since it can arise when two consumer eat each other (a mutual) and one of these consumers either eats another consumer or a basal species. 111D can only occur if a third consumer is present. 
+What will we get if we census our simulated food web? We can expect that the triads that can only arise between all consumers may be unlikely. This includes any triad that contains 2 or 3 mutual ties (201,210,300). It also includes 030C and 120C, wich are both cyclical and cycles can only arise among consumers. 111D and 111U are similar, although 111U seems more likely since it can arise when two consumer eat each other (a mutual) and one of these consumers either eats another consumer or a basal species. 111D can only occur if a third consumer is present. 
 
 Let's take a look. I'll tag every triad that can only occur if every node is a consumer. 
 
@@ -411,7 +410,7 @@ po = odeg %>% gather() %>%
 pi + po
 ```
 
-Intuitively, as the proportion of basal species increases, average in-degree and out-degree both decrease. This suggests that a food web made up of predominately autotrophs has a small number of generalist consumers and many plants that are not vulnerable to predations. We should thus expect that such systems are much more likely influence by density dependence, something that can be studied *in silico* using Jacobian matrices and deterministic differential equations [@novak2016characterizing].  
+Intuitively, as the proportion of basal species increases, average in-degree and out-degree both decrease. This suggests that a food web made up of predominately autotrophs has a small number of generalist consumers and many plants that are not vulnerable to predations. We should thus expect that such systems are influenced by density dependence, something that can be studied *in silico* using Jacobian matrices and deterministic differential equations [@novak2016characterizing].  
 
 ## Path length (redux)
 
