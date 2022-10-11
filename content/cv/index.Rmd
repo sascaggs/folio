@@ -43,7 +43,7 @@ pubs$Citation <- paste(pubs$Citation, pubs$DOI, sep = ' ')
 pubs[,1:2] %>% kbl(align = 'l') %>%
     column_spec(1, width = '0.5in')
 
-```
+``` 
 
 #### Contributions
 
