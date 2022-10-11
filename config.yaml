@@ -21,9 +21,9 @@ menu:
     - name: Data Science
       url: /Data Science/
       weight: 3
-    - name: Blog
-      url: /post/
-      weight: 4
+    #- name: Blog
+    #  url: /post/
+    #  weight: 4
     - name: CV
       url: /cv/
       weight: 2
