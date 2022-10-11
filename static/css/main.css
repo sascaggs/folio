@@ -394,3 +394,22 @@ div.csl-right-inline {
 div.csl-indent {
   margin-left: 2em;
 }
+
+blockquote {
+  background: #3300ff11;
+  border-left: 10px solid #3300ff44;
+  margin: 1.5em 0px;
+  padding: 0.5em 10px;
+  quotes: "\201C""\201D""\2018""\2019";
+}
+blockquote:before {
+  color: #3300ff33;
+  content: open-quote;
+  font-size: 4em;
+  line-height: 0.1em;
+  margin-right: 0.25em;
+  vertical-align: -0.4em;
+}
+blockquote p {
+  display: inline;
+}

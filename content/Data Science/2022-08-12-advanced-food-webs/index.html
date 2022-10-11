@@ -11,9 +11,40 @@ tags:
   - theory
   - food webs
 draft: yes
+bibliography: fw_adv.bib
+csl: pnas.csl
 ---
 
 <script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
 
 
-<p>Welcome to the second post focusing on simulating food webs. We left off with a random food web function that we used to look at how different proportions of basal species can influence the structure of a random food web. Check that post out <a href="/2022/07/28/basic-properties-of-food-webs/">here</a>.</p>
+<p>Welcome to the second post focusing on simulating food webs. We left off with a random food web function that we used to look at how different proportions of basal species can influence the structure of a random food web. Check that post out <a href="https://shanescaggs.netlify.app/data-science/basic-properties-of-food-webs/">here</a>.</p>
+<blockquote>
+<p>There is a problem though. Empirical food webs aren’t so random.</p>
+</blockquote>
+<p>Food webs are <em>nested</em> in the sense that the diets of some species tend to be subsets of the diets of another species. What this means is that specialist species tend to be eaten by other more generalist species, who are in turn eaten by other, even more generalist species. This nestedness phenomenon can arise because of allometric scaling <span class="citation">(<a href="#ref-petchey2008size" role="doc-biblioref">1</a>)</span>. In other words, a species tends to consume resources that are smaller in size than they are. This implies that the larger a species is, the more general it <em>could</em> be <span class="citation">(<a href="#ref-nordstrom2015nestedness" role="doc-biblioref">2</a>)</span>.</p>
+<p>Food webs also exhibit <em>modularity</em> – “a tendency for nodes to cluster” <span class="citation">(<a href="#ref-gilarranz2017effects" role="doc-biblioref">3</a>)</span>. Across many kinds of networks, modularity is believed to be a property that makes a network more resilient to disturbances because having modules limits the propagation of disturbances through the network architecture.</p>
+<div id="nestedness" class="section level1">
+<h1>Nestedness</h1>
+<p>A relatively simple way to added nestedness to our random simulation is to weight the probability of each edge based on the combined body masses of the two species. First, we need to give every species a body mass.</p>
+<p>So we begin by repeating the first four steps in the random simulation.</p>
+<pre class="r"><code>N = 25
+p_basal = 0.6
+e = expand.grid(1:N, 1:N)
+e$basal = e$Var1 &lt;= (N * p_basal)</code></pre>
+<p>Next we create a vertex attribute data frame that contains the species names and their body masses. But here we need to consider how body mass might be distributed as the specifics of this distribution will have consequences for the food web topology <span class="citation">(<a href="#ref-thierry2011consequences" role="doc-biblioref">4</a>)</span>.</p>
+<div id="refs" class="references csl-bib-body">
+<div id="ref-petchey2008size" class="csl-entry">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">O. L. Petchey, A. P. Beckerman, J. O. Riede, P. H. Warren, Size, foraging, and food web structure. <em>Proceedings of the National Academy of Sciences</em> <strong>105</strong>, 4191–4196 (2008).</div>
+</div>
+<div id="ref-nordstrom2015nestedness" class="csl-entry">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">M. Nordström, K. Aarnio, A. Törnroos, E. Bonsdorff, Nestedness of trophic links and biological traits in a marine food web. <em>Ecosphere</em> <strong>6</strong>, 1–14 (2015).</div>
+</div>
+<div id="ref-gilarranz2017effects" class="csl-entry">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">L. J. Gilarranz, B. Rayfield, G. Liñán-Cembrano, J. Bascompte, A. Gonzalez, Effects of network modularity on the spread of perturbation impact in experimental metapopulations. <em>Science</em> <strong>357</strong>, 199–201 (2017).</div>
+</div>
+<div id="ref-thierry2011consequences" class="csl-entry">
+<div class="csl-left-margin">4. </div><div class="csl-right-inline">A. Thierry, O. L. Petchey, A. P. Beckerman, P. H. Warren, R. J. Williams, The consequences of size dependent foraging for food web topology. <em>Oikos</em> <strong>120</strong>, 493–502 (2011).</div>
+</div>
+</div>
+</div>
