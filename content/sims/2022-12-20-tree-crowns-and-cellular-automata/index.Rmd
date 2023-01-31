@@ -1,0 +1,18 @@
+---
+title: Tree crowns and cellular automata
+author: Shane A. Scaggs
+date: '2022-12-20'
+slug: tree-crowns-and-cellular-automata
+categories:
+  - Simulations
+tags:
+  - cellular automata
+  - spatial
+  - ecology
+---
+
+
+```{r}
+
+```
+

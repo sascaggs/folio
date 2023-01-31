@@ -21,9 +21,9 @@ menu:
     - name: Data Science
       url: /Data Science/
       weight: 3
-    #- name: Blog
-    #  url: /post/
-    #  weight: 4
+    - name: Simulations
+      url: /sims/
+      weight: 4
     - name: CV
       url: /cv/
       weight: 2
@@ -43,9 +43,9 @@ params:
   highlightjsVersion: 9.12.0
   logo:
     alt: Logo
-    height: 50
+    height: 60
     url: pix_mustache2_header.png
-    width: 50
+    width: 60
 markup:
   defaultMarkdownHandler: goldmark
   goldmark:
@@ -54,5 +54,5 @@ markup:
   highlight:
       codeFences: true
       noClasses: true
-      style: Nord
+      style: Nord 
 

@@ -1,0 +1,139 @@
+---
+title: Fun times in synthetic land
+author: Shane A. Scaggs
+date: '2023-01-30'
+slug: fun-times-in-synthetic-land
+categories:
+  - Simulations
+tags:
+  - cellular automata
+  - simulation
+  - spatial
+  - structure
+  - complexity
+---
+
+If we are going to analyze early warning signals in spatial patterns from around the world, then we need to have an understanding of 1) how to use `spatialwarnings` package to calculate key statistics and 2) how observed patterns compare to generative models, many of which are housed in the `NLMR` package. This document is a preliminary attempt to generate landscapes and calculate statistics on them.
+
+```{r}
+#install.packages('NLMR')
+#install.packages('spatialwarnings')
+
+library(NLMR)
+library(spatialwarnings)
+library(raster)
+```
+
+Here is the plan. I am going to use three different neutral models to generate nine 30 X 30 rasters from each model. I will stack these rasters together as matrices and then feed them into `spatialwarnings` to calculate generic indicators. Easy peasy.
+
+For models in `NLMR`, each model requires the `resolution`, `ncol`, and `nrow` arguments. These will always be set to `1`, `30`, and `30`, respectively.
+
+# Nearest-neighbor clusters
+
+First up is the `nlm_randomcluster` model that uses a nearest-neighbor algorithm.
+
+The random cluster model requires the parameters `p`, `ai`, and `neighborhood`. The `p` parameter controls "the proportion of elements randomly selected to form clusters." Values near 0 create landscapes with smaller clusters that appear more random while values near 1 are more clustered. The `ai` parameter is a vector of the sample weights. This vector must add up to 1 and its length controls the number of distinct patches. `ai` can be used to create landscapes with one dominant patch type, or an evenly distributed set of patches. The `neighborhood` parameter can be set to 4 (von Neumann neighborhood) or 8 (Moore's neighborhood).
+
+For this example, I am using a von Neumann neighborhood (`4`), with four evenly sampled patches (`rep(0.25, 4)`), and I will vary the value of `p` to to generate different cluster sizes.
+
+```{r, fig.width=7, fig.height=7}
+set.seed(777)
+pvec = seq(0.01,0.8, length=9)   # vector p
+lnn = list()             # list container  
+
+par(mfrow=c(3,3))
+for(i in 1:length(pvec)) { 
+    
+    # loop through pvec and run model
+    nnc = nlm_randomcluster(ncol = 30, 
+                            nrow = 30, 
+                            resolution = 1, 
+                            p  = pvec[i], 
+                            ai = rep(0.25,6), 
+                            neighbourhood = 4) 
+    lnn[[i]] = as.matrix(nnc)
+    # plot raster
+    image(lnn[[i]], main = paste0('p = ', pvec[i]), col=terrain.colors(12))
+    
+}
+
+
+```
+
+# Smoothed cubic white noise
+
+Since some of the models in `NLMR` are not maintained and thus broken, I also am using some tools from the `ambient` package. `ambient` contains particle physics models that can be used to create many patterns. Most often they are used in generative art, but they contain several tools for creating neutral landscapes.
+
+Here I am using `noise_cubic`. According to the documentation, noise cubic "takes a low resolution white noise and scales it up using cubic interpolation." The most important parameter is the `frequency` parameter which controls how clustered the random noise is. Values \>= 1 are essentially random uniform, while values near 0 are clumped. The resulting matrix must be rescaled to fit between 0 and 1.
+
+```{r, message=F, warning=F, fig.width=7, fig.height=7}
+library(ambient)
+set.seed(777)
+freqvec = seq(1,0.01,length=9)
+lwn = list()
+
+par(mfrow=c(3,3))
+for(i in 1:length(freqvec)) { 
+    # loop through freqvec and run model
+    rcube = noise_cubic(dim=c(30,30), 
+                        fractal = 'none', 
+                        frequency = freqvec[i]) 
+    
+    # rescale the values to 0,1
+    .rcube =  apply(rcube, 2, function(x) (x - min(x))/diff(range(x)))
+    lwn[[i]] = as.matrix(.rcube)
+    
+    # plot raster
+    image(lwn[[i]], main = paste0('freq = ', freqvec[i]), col=terrain.colors(12))
+}
+
+```
+
+# Mosaic tessellations
+
+The final model is the `nlm_mosiactess` from the `NLMR`. This model has a single parameter - `germs` - which is described as an intensity parameter. A high number of germs creates many patches, while a small value creates a small number of larger patches.
+
+```{r, fig.width=7, fig.height=7}
+set.seed(777)
+gvec = round(seq(200,2, length=9))   # vector p
+ltess = list()        # list container  
+
+par(mfrow=c(3,3))
+for(i in 1:length(gvec)) { 
+    
+    # loop through pvec and run model
+    mtess = nlm_mosaictess(ncol = 30, 
+                                nrow = 30, 
+                                resolution = 1, 
+                                germs = gvec[i]) 
+    ltess[[i]] = as.matrix(mtess)
+    # plot raster
+    image(ltess[[i]], main = paste0('germs = ', gvec[i]), col=terrain.colors(12))
+
+    }
+
+```
+
+# Spatial warnings
+
+Now that we have the nine rasters, we can use `spatialwarnings` to calculate generic indicator statistics. One we calculate them, we can supply these statistics to the `indictest` function which will assess their significance. Lots of details here that I havent investigated but the process is simple enough.
+
+```{r, warning=F}
+stat_lnn = generic_sews(lnn, subsize = 1)
+stat_lwn = generic_sews(lwn, subsize = 1)
+stat_ltess = generic_sews(ltess, subsize = 1)
+```
+
+With these statistics, we can now plot how the spatial indicators change over time.
+
+```{r, fig.cap="Spatial early warning signals for the nearest neighbor model (top), cubic noise model (middle), and mosaic tessellation model (bottom). Mean values are arbitrary." }
+plot(stat_lnn, main = "Nearest neighbor model")
+plot(stat_lwn, main = "Cubic noise model")
+plot(stat_ltess, main = "Mosaic tessellation model")
+```
+
+When comparing these plots, there are some standout features. First, all three models show a clear transition point for the spatial variance and skewness that occurs at approximately the 7th or 8th matrix. If we compare the Moran's I statistics --  a measure of spatial autocorrelation from one point to the next --  we see that the nearest neighbor model clear differs from cubic noise and tessellations. 
+
+# Conclusion
+
+The purpose of this document was to generate some landscapes and run statistics on them. That was successful. Moving forward, we need to consider which generative models make the most sense for a particular landscape. For instance, changes in swidden landscapes will be better approximated by a model that begins centrally and then extend outward. In the long run, we would prefer an agent based model in which we can embed ethnographically relevant decision rules that can generate a variety of landscape patterns. Some of these models are OK but they are not ideal because they are disconnected from ecology.

@@ -44,9 +44,9 @@ pubs[,1:2] %>% kbl(align = 'l') %>%
     column_spec(1, width = '0.5in')
 
 ``` 
-
+ 
 #### Contributions
-
+ 
 ```{r, echo=F, message=F, warning=F, fig.width=8, fig.height=4, fig.cap="Contribution matrix.", fig.align='center'}
 cont <- openxlsx::read.xlsx("~/Shane's Projects/folio/static/csv/pubs.xlsx", sheet=2)
 
@@ -59,11 +59,11 @@ cont %>%
   theme(axis.text.x = element_text(angle = 40, hjust = 1), 
         axis.text = element_text(color='black'),
         text = element_text(size=14, color='black')) + 
-  labs(x=NULL, y=NULL, fill='Contributed?') 
-```
+  labs(x=NULL, y=NULL, fill='Contributed?')  
+```  
+  
 
-
-### Funding Support
+### Funding Support 
 
 ```{r,echo=F}
 funds <- read.csv(file = "~/Shane's Projects/folio/static/csv/funds.csv")
@@ -82,3 +82,4 @@ conf[,1:4] %>%
     column_spec(1, width = '0.5in')
 
 ```
+ 
