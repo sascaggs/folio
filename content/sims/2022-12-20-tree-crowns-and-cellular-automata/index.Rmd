@@ -9,6 +9,7 @@ tags:
   - cellular automata
   - spatial
   - ecology
+draft: yes
 ---
 
 
